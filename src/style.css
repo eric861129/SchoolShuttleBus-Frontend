@@ -46,11 +46,13 @@ html,
 body,
 #app {
   min-height: 100%;
+  width: 100%;
 }
 
 body {
   margin: 0;
   color: #17304b;
+  overflow-x: clip;
 }
 
 button,
@@ -95,8 +97,12 @@ textarea:focus-visible,
 
 .page-shell {
   min-height: 100vh;
+  min-height: 100dvh;
   display: grid;
   grid-template-columns: 320px minmax(0, 1fr);
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
 }
 
 .page-sidebar {
@@ -104,6 +110,7 @@ textarea:focus-visible,
   top: 0;
   align-self: start;
   min-height: 100vh;
+  min-height: 100dvh;
   padding: 28px 22px;
   background:
     radial-gradient(circle at top right, rgba(84, 146, 255, 0.25), transparent 26%),
@@ -219,6 +226,8 @@ textarea:focus-visible,
 .page-content {
   padding: 32px;
   min-width: 0;
+  width: 100%;
+  max-width: 100%;
 }
 
 .topbar {
@@ -252,6 +261,7 @@ textarea:focus-visible,
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 12px;
+  min-width: 0;
 }
 
 .mini-stat {
@@ -277,6 +287,7 @@ textarea:focus-visible,
 .locale-switcher {
   display: flex;
   align-items: center;
+  min-width: 0;
 }
 
 .locale-toggle {
@@ -291,6 +302,17 @@ textarea:focus-visible,
   color: #123b76;
   border-color: rgba(18, 59, 118, 0.14);
   box-shadow: 0 10px 24px rgba(18, 59, 118, 0.08);
+}
+
+.topbar > *,
+.section-header > *,
+.day-card-header > *,
+.route-card-header > *,
+.record-card-header > *,
+.timeline-card-header > *,
+.route-card-actions > *,
+.record-card-actions > * {
+  min-width: 0;
 }
 
 .eyebrow {
@@ -328,6 +350,8 @@ textarea:focus-visible,
   box-shadow: var(--shadow);
   padding: 24px;
   backdrop-filter: blur(18px);
+  min-width: 0;
+  max-width: 100%;
 }
 
 .panel.inset {
@@ -482,6 +506,7 @@ textarea:focus-visible,
   cursor: pointer;
   padding: 12px 18px;
   font-weight: 600;
+  max-width: 100%;
 }
 
 .button:hover,
@@ -691,9 +716,13 @@ textarea:focus-visible,
 
 .login-screen {
   min-height: 100vh;
+  min-height: 100dvh;
   display: grid;
   place-items: center;
   padding: 28px;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
 }
 
 .login-card {
@@ -702,6 +731,7 @@ textarea:focus-visible,
   grid-template-columns: 1.08fr 0.92fr;
   overflow: hidden;
   padding: 0;
+  max-width: 100%;
 }
 
 .login-hero {
@@ -732,6 +762,7 @@ textarea:focus-visible,
 .login-side {
   padding: 34px;
   background: rgba(255, 255, 255, 0.96);
+  min-width: 0;
 }
 
 .login-side-tools {
@@ -739,6 +770,7 @@ textarea:focus-visible,
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 10px;
+  min-width: 0;
 }
 
 .qr-trigger {
@@ -801,6 +833,7 @@ textarea:focus-visible,
 .qr-modal {
   width: min(460px, 100%);
   padding: 24px;
+  max-width: 100%;
 }
 
 .qr-card {
@@ -1020,6 +1053,8 @@ textarea:focus-visible,
     overflow-y: hidden;
     padding-bottom: 6px;
     scrollbar-width: thin;
+    max-width: 100%;
+    overscroll-behavior-x: contain;
   }
 
   .sidebar-link {
@@ -1058,17 +1093,27 @@ textarea:focus-visible,
 }
 
 @media (max-width: 720px) {
+  html,
+  body,
+  #app {
+    overflow-x: clip;
+  }
+
   .page-content,
-  .page-sidebar,
+  .page-sidebar {
+    padding: 14px;
+  }
+
   .login-screen {
-    padding: 18px;
+    place-items: stretch;
+    padding: 0;
   }
 
   .topbar,
   .panel,
   .login-hero,
   .login-side {
-    padding: 20px;
+    padding: 18px;
   }
 
   .topbar {
@@ -1085,6 +1130,14 @@ textarea:focus-visible,
     justify-content: flex-start;
   }
 
+  .login-card {
+    width: 100%;
+    min-height: 100dvh;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+  }
+
   .sidebar-brand p,
   .sidebar-link p,
   .sidebar-note p {
@@ -1092,7 +1145,7 @@ textarea:focus-visible,
   }
 
   .sidebar-nav {
-    grid-auto-columns: minmax(150px, 72vw);
+    grid-auto-columns: minmax(78vw, 1fr);
     margin-top: 18px;
   }
 
@@ -1111,7 +1164,8 @@ textarea:focus-visible,
 
   .mini-stat {
     min-width: 0;
-    flex: 1 1 180px;
+    width: 100%;
+    flex: 1 1 100%;
   }
 
   .hero-copy h2,
@@ -1144,6 +1198,12 @@ textarea:focus-visible,
   .record-card-actions > *,
   .status-actions > * {
     width: 100%;
+  }
+
+  .locale-toggle,
+  .qr-trigger {
+    width: 100%;
+    min-width: 0;
   }
 
   .record-card-actions > div {
@@ -1186,6 +1246,16 @@ textarea:focus-visible,
   }
 
   .qr-modal {
-    padding: 20px;
+    width: 100%;
+    padding: 18px;
+  }
+
+  .qr-image,
+  .qr-placeholder {
+    width: min(240px, 100%);
+  }
+
+  .qr-url {
+    width: 100%;
   }
 }
