@@ -370,6 +370,7 @@ export const messages = {
         title: '建立或開啟點名',
         description: '先建立新 Session，或從下方列表選擇既有點名紀錄。',
         button: '建立點名',
+        noRoutesForDirection: '目前沒有符合所選方向的班車路線，請先切換方向或檢查路線指派。',
       },
       roster: {
         title: '點名名單',
@@ -914,6 +915,7 @@ export const messages = {
         title: 'Create or open attendance',
         description: 'Create a new session first or select an existing one from the list below.',
         button: 'Create attendance',
+        noRoutesForDirection: 'No shuttle routes match the selected direction right now. Switch direction or review the route assignments first.',
       },
       roster: {
         title: 'Attendance roster',

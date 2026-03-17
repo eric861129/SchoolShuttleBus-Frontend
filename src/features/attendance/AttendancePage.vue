@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { AttendanceRecordResponse, AttendanceSessionResponse, RouteResponse, TripDirection } from '@/api/contracts'
 import { attendanceStatusOptions, tripDirectionOptions } from '@/api/contracts'
 import { authorizedJson, ApiError } from '@/api/http'
+import { filterRoutesByDirection, resolveAttendanceRouteId } from '@/features/attendance/attendanceForm'
+import { todayInTimeZone } from '@/shared/date'
 import { useSessionStore } from '@/stores/session'
 
 const session = useSessionStore()
@@ -12,7 +14,7 @@ const routes = ref<RouteResponse[]>([])
 const sessions = ref<AttendanceSessionResponse[]>([])
 const activeSession = ref<AttendanceSessionResponse | null>(null)
 const routeId = ref('')
-const date = ref(new Date().toISOString().slice(0, 10))
+const date = ref(todayInTimeZone())
 const direction = ref<TripDirection>(1)
 const errorMessage = ref('')
 const statusMessage = ref('')
@@ -22,6 +24,11 @@ const translatedTripDirectionOptions = computed(() =>
 const translatedAttendanceStatusOptions = computed(() =>
   attendanceStatusOptions.map((item) => ({ ...item, label: t(item.labelKey) })),
 )
+const availableRoutes = computed(() => filterRoutesByDirection(routes.value, direction.value))
+
+function syncRouteSelection(preferredRouteId = routeId.value) {
+  routeId.value = resolveAttendanceRouteId(routes.value, direction.value, preferredRouteId)
+}
 
 function statusTone(status: AttendanceRecordResponse['status']) {
   switch (status) {
@@ -61,7 +68,7 @@ async function load() {
 
     routes.value = routePayload
     sessions.value = sessionPayload
-    routeId.value = routeId.value || routePayload[0]?.routeId || ''
+    syncRouteSelection(routeId.value)
     activeSession.value = activeSession.value
       ? sessionPayload.find((item) => item.attendanceSessionId === activeSession.value?.attendanceSessionId) || activeSession.value
       : null
@@ -132,6 +139,14 @@ async function completeSession() {
 
 const visibleSessions = computed(() => sessions.value.slice().sort((left, right) => right.date.localeCompare(left.date)))
 
+watch(direction, () => {
+  syncRouteSelection()
+})
+
+watch(routes, (nextRoutes) => {
+  routeId.value = resolveAttendanceRouteId(nextRoutes, direction.value, routeId.value)
+})
+
 onMounted(load)
 </script>
 
@@ -147,7 +162,7 @@ onMounted(load)
       <div class="stats-grid">
         <div class="metric-card">
           <span>{{ t('attendance.metrics.availableRoutes') }}</span>
-          <strong>{{ routes.length }}</strong>
+          <strong>{{ availableRoutes.length }}</strong>
           <small>{{ t('attendance.metrics.availableRoutesHelp') }}</small>
         </div>
         <div class="metric-card">
@@ -181,7 +196,7 @@ onMounted(load)
         <div class="field">
           <label>{{ t('common.labels.route') }}</label>
           <select v-model="routeId">
-            <option v-for="route in routes" :key="route.routeId" :value="route.routeId">
+            <option v-for="route in availableRoutes" :key="route.routeId" :value="route.routeId">
               {{ route.routeName }}
             </option>
           </select>
@@ -199,6 +214,10 @@ onMounted(load)
             </select>
           </div>
       </div>
+
+      <p v-if="!availableRoutes.length" class="muted" style="margin-top: 14px;">
+        {{ t('attendance.create.noRoutesForDirection') }}
+      </p>
 
       <div class="button-row" style="margin-top: 16px;">
         <button class="button" type="button" :disabled="!routeId" @click="openSession">{{ t('attendance.create.button') }}</button>
