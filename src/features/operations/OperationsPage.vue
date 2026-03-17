@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import type { AdminLookupsResponse, NotificationDeliveryResponse, ReminderRunResponse, ReportExportResponse, RouteResponse } from '@/api/contracts'
 import {
   broadcastAudienceOptions,
@@ -37,6 +37,21 @@ const reportForm = ref({
   startDate: mondayOfWeek(),
   endDate: addDays(mondayOfWeek(), 4),
 })
+
+const sentHistoryCount = computed(() => history.value.filter((item) => item.sentAtUtc).length)
+const failedHistoryCount = computed(() => history.value.filter((item) => item.errorMessage).length)
+
+function historyTone(item: NotificationDeliveryResponse) {
+  if (item.errorMessage) {
+    return 'danger'
+  }
+
+  if (item.sentAtUtc) {
+    return 'success'
+  }
+
+  return 'warning'
+}
 
 async function load() {
   try {
@@ -117,13 +132,47 @@ onMounted(load)
 
 <template>
   <div class="grid">
+    <section class="panel dashboard-hero">
+      <div class="hero-copy">
+        <div class="pill">營運作業中心</div>
+        <h2>把調度、通知與報表集中在同一個工作台</h2>
+        <p class="muted">每個功能都用更明確的卡片與說明包起來，Demo 時比較容易講清楚整體營運流程。</p>
+      </div>
+
+      <div class="stats-grid">
+        <div class="metric-card">
+          <span>學生名單</span>
+          <strong>{{ lookups?.students.length ?? 0 }}</strong>
+          <small>可建立調度的學生總數</small>
+        </div>
+        <div class="metric-card">
+          <span>可用路線</span>
+          <strong>{{ routes.length }}</strong>
+          <small>目前已同步到前端的班車路線</small>
+        </div>
+        <div class="metric-card">
+          <span>通知已送出</span>
+          <strong>{{ sentHistoryCount }}</strong>
+          <small>歷史上已完成寄送的通知數</small>
+        </div>
+        <div class="metric-card">
+          <span>通知異常</span>
+          <strong>{{ failedHistoryCount }}</strong>
+          <small>可快速示範錯誤處理與追蹤</small>
+        </div>
+      </div>
+    </section>
+
     <div v-if="statusMessage" class="alert success">{{ statusMessage }}</div>
     <div v-if="errorMessage" class="alert error">{{ errorMessage }}</div>
 
     <div class="grid three">
-      <section class="panel">
+      <section class="panel tool-card">
         <div class="section-header">
-          <h3>建立調度</h3>
+          <div>
+            <h3>建立調度</h3>
+            <p class="muted">處理臨時換車、補位或特殊行程安排。</p>
+          </div>
         </div>
         <div class="grid">
           <div class="field">
@@ -156,9 +205,12 @@ onMounted(load)
         </div>
       </section>
 
-      <section class="panel">
+      <section class="panel tool-card">
         <div class="section-header">
-          <h3>廣播通知</h3>
+          <div>
+            <h3>廣播通知</h3>
+            <p class="muted">適合臨時停駛、到站提醒或校方公告。</p>
+          </div>
         </div>
         <div class="grid">
           <div class="field">
@@ -182,9 +234,12 @@ onMounted(load)
         </div>
       </section>
 
-      <section class="panel">
+      <section class="panel tool-card">
         <div class="section-header">
-          <h3>報表匯出</h3>
+          <div>
+            <h3>報表匯出</h3>
+            <p class="muted">Demo 時可直接下載 CSV，快速展示資料可追蹤性。</p>
+          </div>
         </div>
         <div class="grid">
           <div class="field">
@@ -216,7 +271,11 @@ onMounted(load)
 
     <section class="panel">
       <div class="section-header">
-        <h3>通知歷程</h3>
+        <div>
+          <h3>通知歷程</h3>
+          <p class="muted">最近寄送結果與錯誤訊息一覽，方便在營運頁補充說明。</p>
+        </div>
+        <span class="pill subtle">{{ history.length }} 筆</span>
       </div>
       <div class="table-wrap">
         <table class="table">
@@ -231,7 +290,11 @@ onMounted(load)
           <tbody>
             <tr v-for="item in history" :key="item.notificationDeliveryId">
               <td>{{ item.recipientEmail }}</td>
-              <td>{{ item.status }}</td>
+              <td>
+                <span class="status-badge" :class="historyTone(item)">
+                  {{ item.status }}
+                </span>
+              </td>
               <td>{{ item.sentAtUtc || '尚未送出' }}</td>
               <td>{{ item.errorMessage || '-' }}</td>
             </tr>

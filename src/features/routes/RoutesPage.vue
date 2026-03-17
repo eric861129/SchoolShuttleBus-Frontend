@@ -27,6 +27,16 @@ const statusMessage = ref('')
 
 const selectedRoute = computed(() => routes.value.find((route) => route.routeId === selectedRouteId.value) || null)
 const isAdministrator = computed(() => session.roles.includes('Administrator'))
+const activeRouteCount = computed(() => routes.value.filter((route) => route.isActive).length)
+const stopCount = computed(() => routes.value.reduce((sum, route) => sum + route.stops.length, 0))
+
+function directionLabel(direction: RouteResponse['direction']) {
+  return tripDirectionOptions.find((item) => item.value === direction)?.label || '未知方向'
+}
+
+function routeTypeLabel(routeType: RouteResponse['routeType']) {
+  return routeTypeOptions.find((item) => item.value === routeType)?.label || '未知類型'
+}
 
 function syncSelectedRoute() {
   if (!selectedRoute.value) {
@@ -125,16 +135,51 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="grid two">
-    <section class="panel">
+  <div class="grid">
+    <section class="panel dashboard-hero">
+      <div class="hero-copy">
+        <div class="pill">{{ isAdministrator ? '路線總覽' : '我的路線' }}</div>
+        <h2>{{ isAdministrator ? '用更清楚的方式維護路線與站點' : '快速查看並維護目前負責的路線' }}</h2>
+        <p class="muted">把建立、選取、編輯與站點設定整理成同一個工作區，操作會更有節奏。</p>
+      </div>
+
+      <div class="stats-grid">
+        <div class="metric-card">
+          <span>路線總數</span>
+          <strong>{{ routes.length }}</strong>
+          <small>目前可用於 Demo 的班車路線</small>
+        </div>
+        <div class="metric-card">
+          <span>啟用中路線</span>
+          <strong>{{ activeRouteCount }}</strong>
+          <small>停用路線會保留資料但不供前台選用</small>
+        </div>
+        <div class="metric-card">
+          <span>全部站點數</span>
+          <strong>{{ stopCount }}</strong>
+          <small>可展示每條路線的細部設定深度</small>
+        </div>
+        <div class="metric-card">
+          <span>目前選取</span>
+          <strong>{{ selectedRoute?.routeName || '尚未選擇' }}</strong>
+          <small>{{ selectedRoute ? `${directionLabel(selectedRoute.direction)} / ${routeTypeLabel(selectedRoute.routeType)}` : '請先從左側選擇路線' }}</small>
+        </div>
+      </div>
+    </section>
+
+    <div class="grid two">
+      <section class="panel">
       <div class="section-header">
-        <h3>{{ isAdministrator ? '建立新路線' : '我的路線' }}</h3>
+        <div>
+          <h3>{{ isAdministrator ? '建立新路線' : '我的路線' }}</h3>
+          <p class="muted">{{ isAdministrator ? '先建立路線，再從下方列表切換編輯。' : '可查看自己可管理的路線與站點。' }}</p>
+        </div>
       </div>
 
       <div v-if="errorMessage" class="alert error">{{ errorMessage }}</div>
       <div v-if="statusMessage" class="alert success">{{ statusMessage }}</div>
 
-      <div v-if="isAdministrator" class="grid">
+      <div v-if="isAdministrator" class="tool-card" style="margin-bottom: 18px;">
         <div class="form-grid">
           <div class="field">
             <label>路線名稱</label>
@@ -163,26 +208,68 @@ onMounted(load)
         </div>
       </div>
 
-      <div class="list" style="margin-top: 18px;">
-        <div v-for="route in routes" :key="route.routeId" class="list-card">
-          <div class="section-header">
+      <div class="route-list">
+        <div
+          v-for="route in routes"
+          :key="route.routeId"
+          class="route-card"
+          :class="{ active: route.routeId === selectedRouteId }"
+        >
+          <div class="route-card-header">
             <div>
               <strong>{{ route.routeName }}</strong>
-              <p class="muted">{{ route.direction === 1 ? '去程' : '回程' }} / {{ route.campusName }}</p>
+              <p class="muted">{{ directionLabel(route.direction) }} / {{ route.campusName }}</p>
             </div>
+            <span class="status-badge" :class="route.isActive ? 'success' : 'neutral'">
+              {{ route.isActive ? '啟用中' : '已停用' }}
+            </span>
+          </div>
+
+          <div class="tag-row">
+            <span class="pill subtle">{{ routeTypeLabel(route.routeType) }}</span>
+            <span class="pill subtle">{{ route.stops.length }} 個站點</span>
+            <span class="pill subtle">{{ route.assignments.length }} 位老師</span>
+          </div>
+
+          <div class="route-card-actions">
             <button class="button-ghost" type="button" @click="selectedRouteId = route.routeId">編輯</button>
           </div>
         </div>
       </div>
-    </section>
+      </section>
 
-    <section class="panel">
+      <section class="panel">
       <div class="section-header">
-        <h3>路線編輯</h3>
+        <div>
+          <h3>路線編輯</h3>
+          <p class="muted">選取一條路線後，可立即調整屬性、站點與老師指派。</p>
+        </div>
       </div>
 
-      <div v-if="!selectedRoute" class="alert info">尚未選擇任何路線。</div>
-      <div v-else class="grid">
+      <div v-if="!selectedRoute" class="empty-state">
+        <strong>尚未選擇任何路線</strong>
+        <span>從左側列表點選一條路線，就能開始編輯細節。</span>
+      </div>
+
+      <div v-else class="stack">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span>路線名稱</span>
+            <strong>{{ selectedRoute.routeName }}</strong>
+            <small>{{ selectedRoute.campusName }}</small>
+          </div>
+          <div class="stat-card">
+            <span>方向 / 類型</span>
+            <strong>{{ directionLabel(selectedRoute.direction) }}</strong>
+            <small>{{ routeTypeLabel(selectedRoute.routeType) }}</small>
+          </div>
+          <div class="stat-card">
+            <span>站點數</span>
+            <strong>{{ stops.length }}</strong>
+            <small>可用來展示完整路線規劃細節</small>
+          </div>
+        </div>
+
         <div class="form-grid">
           <div class="field">
             <label>路線名稱</label>
@@ -213,12 +300,15 @@ onMounted(load)
         </div>
 
         <div class="section-header">
-          <h3>站點設定</h3>
+          <div>
+            <h3>站點設定</h3>
+            <p class="muted">可逐站調整順序、地址與交接資訊。</p>
+          </div>
           <button class="button-secondary" type="button" @click="addStop">新增站點</button>
         </div>
 
         <div class="list">
-          <div v-for="stop in stops" :key="stop.sequence" class="list-card">
+          <div v-for="stop in stops" :key="stop.sequence" class="stop-card">
             <div class="form-grid">
               <div class="field">
                 <label>順序</label>
@@ -248,6 +338,7 @@ onMounted(load)
           <button v-if="isAdministrator" class="button" type="button" @click="saveRoute">儲存路線設定</button>
         </div>
       </div>
-    </section>
+      </section>
+    </div>
   </div>
 </template>
