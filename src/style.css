@@ -1308,3 +1308,206 @@ textarea:focus-visible,
     width: 100%;
   }
 }
+
+:root.is-handset,
+:root.is-handset body,
+:root.is-handset #app {
+  overflow-x: clip;
+}
+
+:root.is-handset .page-shell {
+  grid-template-columns: 1fr;
+}
+
+:root.is-handset .page-sidebar {
+  position: static;
+  min-height: auto;
+  padding: 14px 14px 16px;
+}
+
+:root.is-handset .page-content {
+  padding: 14px;
+}
+
+:root.is-handset .sidebar-brand,
+:root.is-handset .sidebar-user-card,
+:root.is-handset .sidebar-note {
+  border-radius: 20px;
+}
+
+:root.is-handset .sidebar-brand {
+  padding: 18px;
+}
+
+:root.is-handset .sidebar-brand h1 {
+  font-size: 1.45rem;
+}
+
+:root.is-handset .sidebar-brand p,
+:root.is-handset .sidebar-link p,
+:root.is-handset .sidebar-note p {
+  font-size: 0.92rem;
+}
+
+:root.is-handset .sidebar-nav {
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(78vw, 1fr);
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-width: 100%;
+  padding-bottom: 6px;
+  margin-top: 18px;
+  scrollbar-width: thin;
+  overscroll-behavior-x: contain;
+}
+
+:root.is-handset .sidebar-link {
+  min-height: auto;
+  padding: 14px 16px;
+}
+
+:root.is-handset .sidebar-link p {
+  display: none;
+}
+
+:root.is-handset .sidebar-arrow {
+  align-self: center;
+}
+
+:root.is-handset .topbar,
+:root.is-handset .panel,
+:root.is-handset .login-hero,
+:root.is-handset .login-side {
+  padding: 18px;
+}
+
+:root.is-handset .topbar,
+:root.is-handset .topbar-meta,
+:root.is-handset .section-header,
+:root.is-handset .day-card-header,
+:root.is-handset .route-card-header,
+:root.is-handset .record-card-header,
+:root.is-handset .timeline-card-header,
+:root.is-handset .button-row,
+:root.is-handset .toolbar,
+:root.is-handset .route-card-actions,
+:root.is-handset .record-card-actions,
+:root.is-handset .status-actions {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+:root.is-handset .topbar,
+:root.is-handset .section-header {
+  flex-wrap: wrap;
+}
+
+:root.is-handset .topbar-meta,
+:root.is-handset .login-side-tools,
+:root.is-handset .mini-stat,
+:root.is-handset .locale-switcher,
+:root.is-handset .locale-toggle,
+:root.is-handset .qr-trigger,
+:root.is-handset .button-row > *,
+:root.is-handset .toolbar > *,
+:root.is-handset .route-card-actions > *,
+:root.is-handset .record-card-actions > *,
+:root.is-handset .status-actions > * {
+  width: 100%;
+  min-width: 0;
+}
+
+:root.is-handset .topbar-meta,
+:root.is-handset .login-side-tools {
+  justify-content: flex-start;
+}
+
+:root.is-handset .mini-stat {
+  flex: 1 1 100%;
+}
+
+:root.is-handset .locale-toggle {
+  white-space: normal;
+}
+
+:root.is-handset .dashboard-hero,
+:root.is-handset .hero-panel,
+:root.is-handset .dashboard-split,
+:root.is-handset .login-card,
+:root.is-handset .grid.two,
+:root.is-handset .grid.three,
+:root.is-handset .day-options,
+:root.is-handset .metric-grid,
+:root.is-handset .stats-grid,
+:root.is-handset .timeline {
+  grid-template-columns: 1fr;
+}
+
+:root.is-handset .login-screen {
+  min-height: 100dvh;
+  place-items: stretch;
+  padding: 0;
+}
+
+:root.is-handset .login-card {
+  width: 100%;
+  min-height: 100dvh;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+:root.is-handset .record-card-actions > div {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+}
+
+:root.is-handset .status-button {
+  width: 100%;
+  text-align: center;
+}
+
+:root.is-handset .hero-copy h2,
+:root.is-handset .hero-copy h3 {
+  font-size: 1.6rem;
+}
+
+:root.is-handset .metric-card strong,
+:root.is-handset .stat-card strong {
+  font-size: 1.5rem;
+}
+
+:root.is-handset .pill,
+:root.is-handset .status-badge {
+  align-self: flex-start;
+  max-width: 100%;
+}
+
+:root.is-handset .checkbox-pill {
+  align-items: flex-start;
+}
+
+:root.is-handset .qr-overlay {
+  padding: 16px;
+}
+
+:root.is-handset .qr-modal {
+  width: 100%;
+  padding: 18px;
+}
+
+:root.is-handset .qr-image,
+:root.is-handset .qr-placeholder {
+  width: min(240px, 100%);
+}
+
+:root.is-handset .qr-url {
+  width: 100%;
+}
+
+:root.is-handset .table th,
+:root.is-handset .table td {
+  padding: 12px;
+  font-size: 0.94rem;
+}
