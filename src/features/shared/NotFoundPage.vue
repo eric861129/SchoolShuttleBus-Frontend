@@ -1,8 +1,14 @@
+<script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
+</script>
+
 <template>
   <section class="panel">
     <div class="section-header">
-      <h2>找不到頁面</h2>
+      <h2>{{ t('shared.notFound.title') }}</h2>
     </div>
-    <p class="muted">目前沒有對應的路由。請回到側邊選單中的功能頁面繼續操作。</p>
+    <p class="muted">{{ t('shared.notFound.description') }}</p>
   </section>
 </template>

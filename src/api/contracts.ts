@@ -143,60 +143,61 @@ export interface ReportExportResponse {
 }
 
 export const tripDirectionOptions = [
-  { value: 1 as TripDirection, label: '去程' },
-  { value: 2 as TripDirection, label: '回程' },
+  { value: 1 as TripDirection, labelKey: 'common.tripDirection.toSchool' },
+  { value: 2 as TripDirection, labelKey: 'common.tripDirection.homebound' },
 ]
 
 export const routeTypeOptions = [
-  { value: 1 as RouteType, label: '固定班車' },
-  { value: 2 as RouteType, label: '備援調度' },
+  { value: 1 as RouteType, labelKey: 'common.routeType.fixed' },
+  { value: 2 as RouteType, labelKey: 'common.routeType.backup' },
 ]
 
 export const attendanceStatusOptions = [
-  { value: 1 as AttendanceStatus, label: '待確認' },
-  { value: 2 as AttendanceStatus, label: '已上車' },
-  { value: 3 as AttendanceStatus, label: '請假' },
-  { value: 4 as AttendanceStatus, label: '缺席' },
+  { value: 1 as AttendanceStatus, labelKey: 'common.attendanceStatus.pending' },
+  { value: 2 as AttendanceStatus, labelKey: 'common.attendanceStatus.boarded' },
+  { value: 3 as AttendanceStatus, labelKey: 'common.attendanceStatus.leave' },
+  { value: 4 as AttendanceStatus, labelKey: 'common.attendanceStatus.absent' },
 ]
 
 export const broadcastAudienceOptions = [
-  { value: 1 as BroadcastAudience, label: '全部' },
-  { value: 2 as BroadcastAudience, label: '家長' },
-  { value: 3 as BroadcastAudience, label: '學生' },
-  { value: 4 as BroadcastAudience, label: '老師' },
+  { value: 1 as BroadcastAudience, labelKey: 'common.audience.all' },
+  { value: 2 as BroadcastAudience, labelKey: 'common.audience.parent' },
+  { value: 3 as BroadcastAudience, labelKey: 'common.audience.student' },
+  { value: 4 as BroadcastAudience, labelKey: 'common.audience.teacher' },
 ]
 
 export const reportTypeOptions = [
-  { value: 1 as ReportType, label: '週乘車統計' },
-  { value: 2 as ReportType, label: '點名結果報表' },
-  { value: 3 as ReportType, label: '通知歷程報表' },
+  { value: 1 as ReportType, labelKey: 'common.reportType.weeklyRegistration' },
+  { value: 2 as ReportType, labelKey: 'common.reportType.attendanceResult' },
+  { value: 3 as ReportType, labelKey: 'common.reportType.notificationHistory' },
 ]
 
-export const exportFormatOptions = [{ value: 1 as ExportFormat, label: 'CSV' }]
+export const exportFormatOptions = [{ value: 1 as ExportFormat, labelKey: 'common.exportFormat.csv' }]
 
-export const userRoleLabels: Record<UserRole, string> = {
-  Student: '學生',
-  Parent: '家長',
-  Teacher: '老師',
-  Administrator: '管理員',
+export const userRoleMessageKeys: Record<UserRole, string> = {
+  Student: 'common.roles.Student',
+  Parent: 'common.roles.Parent',
+  Teacher: 'common.roles.Teacher',
+  Administrator: 'common.roles.Administrator',
 }
 
-export function formatUserRole(role: UserRole) {
-  return userRoleLabels[role] || role
+export function formatUserRole(role: UserRole, translate: (key: string) => string) {
+  return translate(userRoleMessageKeys[role]) || role
 }
 
-const notificationStatusLabels: Record<string, string> = {
-  Pending: '待送出',
-  Queued: '排程中',
-  Processing: '處理中',
-  Sent: '已送出',
-  Delivered: '已送達',
-  Success: '成功',
-  Succeeded: '成功',
-  Failed: '失敗',
-  Error: '錯誤',
+const notificationStatusMessageKeys: Record<string, string> = {
+  Pending: 'common.notificationStatus.Pending',
+  Queued: 'common.notificationStatus.Queued',
+  Processing: 'common.notificationStatus.Processing',
+  Sent: 'common.notificationStatus.Sent',
+  Delivered: 'common.notificationStatus.Delivered',
+  Success: 'common.notificationStatus.Success',
+  Succeeded: 'common.notificationStatus.Succeeded',
+  Failed: 'common.notificationStatus.Failed',
+  Error: 'common.notificationStatus.Error',
 }
 
-export function formatNotificationStatus(status: string) {
-  return notificationStatusLabels[status] || status
+export function formatNotificationStatus(status: string, translate: (key: string) => string) {
+  const key = notificationStatusMessageKeys[status]
+  return key ? translate(key) : status
 }

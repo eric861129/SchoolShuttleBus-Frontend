@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { WeeklyRegistrationResponse } from '@/api/contracts'
 import { authorizedJson, ApiError } from '@/api/http'
-import { formatDateLabel, mondayOfWeek, nextWeekMonday } from '@/shared/date'
+import { formatDateLabelForLocale, mondayOfWeek, nextWeekMonday } from '@/shared/date'
 import { useSessionStore } from '@/stores/session'
 
 const session = useSessionStore()
+const { locale, t } = useI18n()
 const studentId = session.context?.students[0]?.studentId || ''
 const currentWeek = ref<WeeklyRegistrationResponse | null>(null)
 const nextWeek = ref<WeeklyRegistrationResponse | null>(null)
@@ -31,6 +33,10 @@ function summaryTone(toSchool: boolean, homebound: boolean) {
   return 'neutral'
 }
 
+function formatDateLabel(date: string) {
+  return formatDateLabelForLocale(date, locale.value)
+}
+
 const currentWeekTrips = computed(() => tripCount(currentWeek.value))
 const nextWeekTrips = computed(() => tripCount(nextWeek.value))
 const currentWeekDays = computed(() => activeDaysCount(currentWeek.value))
@@ -50,7 +56,7 @@ async function load() {
     currentWeek.value = currentPayload
     nextWeek.value = nextPayload
   } catch (error) {
-    errorMessage.value = error instanceof ApiError ? error.message : '載入預覽失敗，請稍後再試。'
+    errorMessage.value = error instanceof ApiError ? error.message : t('schedule.messages.loadError')
   }
 }
 
@@ -61,31 +67,31 @@ onMounted(load)
   <div class="grid">
     <section class="panel dashboard-hero">
       <div class="hero-copy">
-        <div class="pill">每週預覽</div>
-        <h2>快速查看本週與下週安排</h2>
-        <p class="muted">不必再切回編輯畫面，也能一眼看出哪些日子有搭乘、哪些還是空白。</p>
+        <div class="pill">{{ t('schedule.hero.pill') }}</div>
+        <h2>{{ t('schedule.hero.title') }}</h2>
+        <p class="muted">{{ t('schedule.hero.description') }}</p>
       </div>
 
       <div class="stats-grid">
         <div class="metric-card">
-          <span>本週搭乘天數</span>
+          <span>{{ t('schedule.metrics.currentWeekDays') }}</span>
           <strong>{{ currentWeekDays }}</strong>
-          <small>目前週次中至少有一趟搭乘的天數</small>
+          <small>{{ t('schedule.metrics.currentWeekDaysHelp') }}</small>
         </div>
         <div class="metric-card">
-          <span>本週總趟次</span>
+          <span>{{ t('schedule.metrics.currentWeekTrips') }}</span>
           <strong>{{ currentWeekTrips }}</strong>
-          <small>去程與回程一起計算</small>
+          <small>{{ t('schedule.metrics.currentWeekTripsHelp') }}</small>
         </div>
         <div class="metric-card">
-          <span>下週已預填天數</span>
+          <span>{{ t('schedule.metrics.nextWeekDays') }}</span>
           <strong>{{ nextWeekDays }}</strong>
-          <small>可先用來確認是否需要再調整</small>
+          <small>{{ t('schedule.metrics.nextWeekDaysHelp') }}</small>
         </div>
         <div class="metric-card">
-          <span>下週總趟次</span>
+          <span>{{ t('schedule.metrics.nextWeekTrips') }}</span>
           <strong>{{ nextWeekTrips }}</strong>
-          <small>Demo 時可順手展示預填效果</small>
+          <small>{{ t('schedule.metrics.nextWeekTripsHelp') }}</small>
         </div>
       </div>
     </section>
@@ -96,15 +102,15 @@ onMounted(load)
       <section class="panel">
       <div class="section-header">
         <div>
-          <h3>本週乘車安排</h3>
-          <p class="muted">適合快速確認今天到本週剩餘天數的搭乘狀況。</p>
+          <h3>{{ t('schedule.sections.currentWeekTitle') }}</h3>
+          <p class="muted">{{ t('schedule.sections.currentWeekDescription') }}</p>
         </div>
         <span class="pill subtle">{{ currentWeek?.weekStart || mondayOfWeek() }}</span>
       </div>
 
       <div v-if="!(currentWeek?.days.length)" class="empty-state">
-        <strong>目前沒有可顯示的本週資料</strong>
-        <span>先到乘車登記頁完成設定，就會同步出現在這裡。</span>
+        <strong>{{ t('schedule.empty.currentWeekTitle') }}</strong>
+        <span>{{ t('schedule.empty.currentWeekDescription') }}</span>
       </div>
 
       <div v-else class="timeline">
@@ -112,11 +118,11 @@ onMounted(load)
           <div class="timeline-card-header">
             <strong>{{ formatDateLabel(day.date) }}</strong>
             <span class="status-badge" :class="summaryTone(day.toSchool, day.homebound)">
-              {{ day.toSchool || day.homebound ? '已有安排' : '未搭乘' }}
+              {{ day.toSchool || day.homebound ? t('schedule.status.arranged') : t('schedule.status.none') }}
             </span>
           </div>
-          <p class="muted">去程：{{ day.toSchool ? '搭乘' : '不搭乘' }}</p>
-          <p class="muted">回程：{{ day.homebound ? '搭乘' : '不搭乘' }}</p>
+          <p class="muted">{{ t('schedule.status.toSchool', { value: day.toSchool ? t('schedule.status.riding') : t('schedule.status.notRiding') }) }}</p>
+          <p class="muted">{{ t('schedule.status.homebound', { value: day.homebound ? t('schedule.status.riding') : t('schedule.status.notRiding') }) }}</p>
         </div>
       </div>
       </section>
@@ -124,15 +130,15 @@ onMounted(load)
       <section class="panel">
       <div class="section-header">
         <div>
-          <h3>下週預填結果</h3>
-          <p class="muted">可在 Demo 時展示上一週複製與預先規劃的成果。</p>
+          <h3>{{ t('schedule.sections.nextWeekTitle') }}</h3>
+          <p class="muted">{{ t('schedule.sections.nextWeekDescription') }}</p>
         </div>
         <span class="pill subtle">{{ nextWeek?.weekStart || nextWeekMonday() }}</span>
       </div>
 
       <div v-if="!(nextWeek?.days.length)" class="empty-state">
-        <strong>目前沒有預填資料</strong>
-        <span>可以先在乘車登記頁複製上一週或手動設定，下週預覽就會同步更新。</span>
+        <strong>{{ t('schedule.empty.nextWeekTitle') }}</strong>
+        <span>{{ t('schedule.empty.nextWeekDescription') }}</span>
       </div>
 
       <div v-else class="timeline">
@@ -140,11 +146,11 @@ onMounted(load)
           <div class="timeline-card-header">
             <strong>{{ formatDateLabel(day.date) }}</strong>
             <span class="status-badge" :class="summaryTone(day.toSchool, day.homebound)">
-              {{ day.toSchool || day.homebound ? '已有安排' : '未搭乘' }}
+              {{ day.toSchool || day.homebound ? t('schedule.status.arranged') : t('schedule.status.none') }}
             </span>
           </div>
-          <p class="muted">去程：{{ day.toSchool ? '搭乘' : '不搭乘' }}</p>
-          <p class="muted">回程：{{ day.homebound ? '搭乘' : '不搭乘' }}</p>
+          <p class="muted">{{ t('schedule.status.toSchool', { value: day.toSchool ? t('schedule.status.riding') : t('schedule.status.notRiding') }) }}</p>
+          <p class="muted">{{ t('schedule.status.homebound', { value: day.homebound ? t('schedule.status.riding') : t('schedule.status.notRiding') }) }}</p>
         </div>
       </div>
       </section>

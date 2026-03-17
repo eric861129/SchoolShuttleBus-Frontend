@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { AdminLookupsResponse, NotificationDeliveryResponse, ReminderRunResponse, ReportExportResponse, RouteResponse } from '@/api/contracts'
 import {
   broadcastAudienceOptions,
@@ -13,6 +14,7 @@ import { addDays, mondayOfWeek } from '@/shared/date'
 import { useSessionStore } from '@/stores/session'
 
 const session = useSessionStore()
+const { t } = useI18n()
 const lookups = ref<AdminLookupsResponse | null>(null)
 const routes = ref<RouteResponse[]>([])
 const history = ref<NotificationDeliveryResponse[]>([])
@@ -28,7 +30,7 @@ const dispatchForm = ref({
 
 const broadcastForm = ref({
   audience: 1 as 1 | 2 | 3 | 4,
-  subject: 'School Shuttle Bus Demo 通知',
+  subject: t('operations.broadcast.defaultSubject'),
   body: '',
 })
 
@@ -41,6 +43,18 @@ const reportForm = ref({
 
 const sentHistoryCount = computed(() => history.value.filter((item) => item.sentAtUtc).length)
 const failedHistoryCount = computed(() => history.value.filter((item) => item.errorMessage).length)
+const translatedTripDirectionOptions = computed(() =>
+  tripDirectionOptions.map((item) => ({ ...item, label: t(item.labelKey) })),
+)
+const translatedBroadcastAudienceOptions = computed(() =>
+  broadcastAudienceOptions.map((item) => ({ ...item, label: t(item.labelKey) })),
+)
+const translatedReportTypeOptions = computed(() =>
+  reportTypeOptions.map((item) => ({ ...item, label: t(item.labelKey) })),
+)
+const translatedExportFormatOptions = computed(() =>
+  exportFormatOptions.map((item) => ({ ...item, label: t(item.labelKey) })),
+)
 
 function historyTone(item: NotificationDeliveryResponse) {
   if (item.errorMessage) {
@@ -68,7 +82,7 @@ async function load() {
     dispatchForm.value.studentId = dispatchForm.value.studentId || lookupPayload.students[0]?.studentId || ''
     dispatchForm.value.routeId = dispatchForm.value.routeId || routePayload[0]?.routeId || ''
   } catch (error) {
-    errorMessage.value = error instanceof ApiError ? error.message : '載入營運作業資料失敗。'
+    errorMessage.value = error instanceof ApiError ? error.message : t('operations.messages.loadError')
   }
 }
 
@@ -78,9 +92,9 @@ async function createDispatch() {
       method: 'POST',
       body: dispatchForm.value,
     })
-    statusMessage.value = '已建立調度記錄。'
+    statusMessage.value = t('operations.messages.dispatchSuccess')
   } catch (error) {
-    errorMessage.value = error instanceof ApiError ? error.message : '建立調度失敗。'
+    errorMessage.value = error instanceof ApiError ? error.message : t('operations.messages.dispatchError')
   }
 }
 
@@ -90,10 +104,10 @@ async function sendBroadcast() {
       method: 'POST',
       body: broadcastForm.value,
     })
-    statusMessage.value = `廣播已送出，共 ${result.deliveryCount} 筆。`
+    statusMessage.value = t('operations.messages.broadcastSuccess', { count: result.deliveryCount })
     await load()
   } catch (error) {
-    errorMessage.value = error instanceof ApiError ? error.message : '發送廣播失敗。'
+    errorMessage.value = error instanceof ApiError ? error.message : t('operations.messages.broadcastError')
   }
 }
 
@@ -110,9 +124,9 @@ async function exportReport() {
     anchor.download = file.fileName
     anchor.click()
     URL.revokeObjectURL(url)
-    statusMessage.value = `報表 ${report.fileName} 已下載。`
+    statusMessage.value = t('operations.messages.exportSuccess', { fileName: report.fileName })
   } catch (error) {
-    errorMessage.value = error instanceof ApiError ? error.message : '匯出報表失敗。'
+    errorMessage.value = error instanceof ApiError ? error.message : t('operations.messages.exportError')
   }
 }
 
@@ -121,10 +135,10 @@ async function runReminders() {
     const result = await authorizedJson<ReminderRunResponse>(session, '/api/notifications/reminders/run', {
       method: 'POST',
     })
-    statusMessage.value = `提醒工作已執行，共送出 ${result.deliveryCount} 筆通知。`
+    statusMessage.value = t('operations.messages.reminderSuccess', { count: result.deliveryCount })
     await load()
   } catch (error) {
-    errorMessage.value = error instanceof ApiError ? error.message : '執行提醒失敗。'
+    errorMessage.value = error instanceof ApiError ? error.message : t('operations.messages.reminderError')
   }
 }
 
@@ -135,31 +149,31 @@ onMounted(load)
   <div class="grid">
     <section class="panel dashboard-hero">
       <div class="hero-copy">
-        <div class="pill">營運作業中心</div>
-        <h2>把調度、通知與報表集中在同一個工作台</h2>
-        <p class="muted">每個功能都用更明確的卡片與說明包起來，Demo 時比較容易講清楚整體營運流程。</p>
+        <div class="pill">{{ t('operations.hero.pill') }}</div>
+        <h2>{{ t('operations.hero.title') }}</h2>
+        <p class="muted">{{ t('operations.hero.description') }}</p>
       </div>
 
       <div class="stats-grid">
         <div class="metric-card">
-          <span>學生名單</span>
+          <span>{{ t('operations.metrics.students') }}</span>
           <strong>{{ lookups?.students.length ?? 0 }}</strong>
-          <small>可建立調度的學生總數</small>
+          <small>{{ t('operations.metrics.studentsHelp') }}</small>
         </div>
         <div class="metric-card">
-          <span>可用路線</span>
+          <span>{{ t('operations.metrics.routes') }}</span>
           <strong>{{ routes.length }}</strong>
-          <small>目前已同步到前端的班車路線</small>
+          <small>{{ t('operations.metrics.routesHelp') }}</small>
         </div>
         <div class="metric-card">
-          <span>通知已送出</span>
+          <span>{{ t('operations.metrics.sent') }}</span>
           <strong>{{ sentHistoryCount }}</strong>
-          <small>歷史上已完成寄送的通知數</small>
+          <small>{{ t('operations.metrics.sentHelp') }}</small>
         </div>
         <div class="metric-card">
-          <span>通知異常</span>
+          <span>{{ t('operations.metrics.failed') }}</span>
           <strong>{{ failedHistoryCount }}</strong>
-          <small>可快速示範錯誤處理與追蹤</small>
+          <small>{{ t('operations.metrics.failedHelp') }}</small>
         </div>
       </div>
     </section>
@@ -171,13 +185,13 @@ onMounted(load)
       <section class="panel tool-card">
         <div class="section-header">
           <div>
-            <h3>建立調度</h3>
-            <p class="muted">處理臨時換車、補位或特殊行程安排。</p>
+            <h3>{{ t('operations.dispatch.title') }}</h3>
+            <p class="muted">{{ t('operations.dispatch.description') }}</p>
           </div>
         </div>
         <div class="grid">
           <div class="field">
-            <label>學生</label>
+            <label>{{ t('common.labels.student') }}</label>
             <select v-model="dispatchForm.studentId">
               <option v-for="student in lookups?.students || []" :key="student.studentId" :value="student.studentId">
                 {{ student.studentNumber }} / {{ student.studentName }}
@@ -185,87 +199,87 @@ onMounted(load)
             </select>
           </div>
           <div class="field">
-            <label>路線</label>
+            <label>{{ t('common.labels.route') }}</label>
             <select v-model="dispatchForm.routeId">
               <option v-for="route in routes" :key="route.routeId" :value="route.routeId">{{ route.routeName }}</option>
             </select>
           </div>
           <div class="field">
-            <label>日期</label>
+            <label>{{ t('common.labels.date') }}</label>
             <input v-model="dispatchForm.date" type="date" />
           </div>
           <div class="field">
-            <label>方向</label>
+            <label>{{ t('common.labels.direction') }}</label>
             <select v-model="dispatchForm.direction">
-              <option v-for="item in tripDirectionOptions" :key="item.value" :value="item.value">{{ item.label }}</option>
+              <option v-for="item in translatedTripDirectionOptions" :key="item.value" :value="item.value">{{ item.label }}</option>
             </select>
           </div>
         </div>
         <div class="button-row" style="margin-top: 16px;">
-          <button class="button" type="button" @click="createDispatch">建立調度</button>
+          <button class="button" type="button" @click="createDispatch">{{ t('operations.dispatch.title') }}</button>
         </div>
       </section>
 
       <section class="panel tool-card">
         <div class="section-header">
           <div>
-            <h3>廣播通知</h3>
-            <p class="muted">適合臨時停駛、到站提醒或校方公告。</p>
+            <h3>{{ t('operations.broadcast.title') }}</h3>
+            <p class="muted">{{ t('operations.broadcast.description') }}</p>
           </div>
         </div>
         <div class="grid">
           <div class="field">
-            <label>對象</label>
+            <label>{{ t('common.labels.audience') }}</label>
             <select v-model="broadcastForm.audience">
-              <option v-for="item in broadcastAudienceOptions" :key="item.value" :value="item.value">{{ item.label }}</option>
+              <option v-for="item in translatedBroadcastAudienceOptions" :key="item.value" :value="item.value">{{ item.label }}</option>
             </select>
           </div>
           <div class="field">
-            <label>主旨</label>
+            <label>{{ t('common.labels.subject') }}</label>
             <input v-model="broadcastForm.subject" />
           </div>
           <div class="field">
-            <label>內容</label>
+            <label>{{ t('common.labels.content') }}</label>
             <textarea v-model="broadcastForm.body" />
           </div>
         </div>
         <div class="button-row" style="margin-top: 16px;">
-          <button class="button" type="button" @click="sendBroadcast">送出廣播</button>
-          <button class="button-secondary" type="button" @click="runReminders">執行提醒</button>
+          <button class="button" type="button" @click="sendBroadcast">{{ t('common.actions.send') }}</button>
+          <button class="button-secondary" type="button" @click="runReminders">{{ t('common.actions.run') }}</button>
         </div>
       </section>
 
       <section class="panel tool-card">
         <div class="section-header">
           <div>
-            <h3>報表匯出</h3>
-            <p class="muted">Demo 時可直接下載 CSV，快速展示資料可追蹤性。</p>
+            <h3>{{ t('operations.report.title') }}</h3>
+            <p class="muted">{{ t('operations.report.description') }}</p>
           </div>
         </div>
         <div class="grid">
           <div class="field">
-            <label>報表類型</label>
+            <label>{{ t('common.labels.reportType') }}</label>
             <select v-model="reportForm.reportType">
-              <option v-for="item in reportTypeOptions" :key="item.value" :value="item.value">{{ item.label }}</option>
+              <option v-for="item in translatedReportTypeOptions" :key="item.value" :value="item.value">{{ item.label }}</option>
             </select>
           </div>
           <div class="field">
-            <label>格式</label>
+            <label>{{ t('common.labels.format') }}</label>
             <select v-model="reportForm.exportFormat">
-              <option v-for="item in exportFormatOptions" :key="item.value" :value="item.value">{{ item.label }}</option>
+              <option v-for="item in translatedExportFormatOptions" :key="item.value" :value="item.value">{{ item.label }}</option>
             </select>
           </div>
           <div class="field">
-            <label>開始日期</label>
+            <label>{{ t('common.labels.startDate') }}</label>
             <input v-model="reportForm.startDate" type="date" />
           </div>
           <div class="field">
-            <label>結束日期</label>
+            <label>{{ t('common.labels.endDate') }}</label>
             <input v-model="reportForm.endDate" type="date" />
           </div>
         </div>
         <div class="button-row" style="margin-top: 16px;">
-          <button class="button" type="button" @click="exportReport">下載報表</button>
+          <button class="button" type="button" @click="exportReport">{{ t('common.actions.download') }}</button>
         </div>
       </section>
     </div>
@@ -273,19 +287,19 @@ onMounted(load)
     <section class="panel">
       <div class="section-header">
         <div>
-          <h3>通知歷程</h3>
-          <p class="muted">最近寄送結果與錯誤訊息一覽，方便在營運頁補充說明。</p>
+          <h3>{{ t('operations.history.title') }}</h3>
+          <p class="muted">{{ t('operations.history.description') }}</p>
         </div>
-        <span class="pill subtle">{{ history.length }} 筆</span>
+        <span class="pill subtle">{{ t('operations.history.count', { count: history.length }) }}</span>
       </div>
       <div class="table-wrap">
         <table class="table">
           <thead>
             <tr>
-              <th>收件人</th>
-              <th>狀態</th>
-              <th>送出時間</th>
-              <th>錯誤訊息</th>
+              <th>{{ t('operations.history.recipient') }}</th>
+              <th>{{ t('operations.history.status') }}</th>
+              <th>{{ t('operations.history.sentAt') }}</th>
+              <th>{{ t('operations.history.errorMessage') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -293,10 +307,10 @@ onMounted(load)
               <td>{{ item.recipientEmail }}</td>
               <td>
                 <span class="status-badge" :class="historyTone(item)">
-                  {{ formatNotificationStatus(item.status) }}
+                  {{ formatNotificationStatus(item.status, t) }}
                 </span>
               </td>
-              <td>{{ item.sentAtUtc || '尚未送出' }}</td>
+              <td>{{ item.sentAtUtc || t('common.empty.notSent') }}</td>
               <td>{{ item.errorMessage || '-' }}</td>
             </tr>
           </tbody>

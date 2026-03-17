@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { resolveHomePath } from '@/app/navigation'
 import { ApiError } from '@/api/http'
 import LoginPage from '@/features/auth/LoginPage.vue'
@@ -8,6 +9,7 @@ import { useSessionStore } from '@/stores/session'
 
 const router = useRouter()
 const session = useSessionStore()
+const { t } = useI18n()
 const busy = ref(false)
 const errorMessage = ref('')
 
@@ -19,7 +21,7 @@ async function handleSubmit(payload: { account: string; password: string }) {
     await session.login(payload)
     await router.replace(resolveHomePath(session.roles))
   } catch (error) {
-    errorMessage.value = error instanceof ApiError ? error.message : '登入失敗，請稍後再試。'
+    errorMessage.value = error instanceof ApiError ? error.message : t('common.login.failed')
   } finally {
     busy.value = false
   }

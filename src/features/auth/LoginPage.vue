@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { reactive } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { demoAccounts } from '@/features/auth/demoAccounts'
+import LocaleSwitcher from '@/features/shared/LocaleSwitcher.vue'
 
 defineProps<{
   busy?: boolean
@@ -10,18 +12,12 @@ defineProps<{
 const emit = defineEmits<{
   authenticate: [{ account: string; password: string }]
 }>()
+const { t } = useI18n()
 
 const form = reactive({
   account: '',
   password: '',
 })
-
-const demoDescriptions: Record<string, string> = {
-  '管理員 Demo': '查看營運總覽、通知與報表流程',
-  '老師 Demo': '建立點名、更新學生搭乘狀態',
-  '家長 Demo': '完成每週乘車登記與預覽',
-  '學生 Demo': '快速確認自己的乘車安排',
-}
 
 function submit(account = form.account, password = form.password) {
   emit('authenticate', { account, password })
@@ -32,26 +28,24 @@ function submit(account = form.account, password = form.password) {
   <div class="login-screen">
     <div class="panel login-card">
       <section class="login-hero">
-        <div class="eyebrow">School Shuttle Bus Demo</div>
-        <h1 class="hero-title">康橋智慧交通車管理系統</h1>
-        <p class="hero-subtitle">
-          把家長登記、老師點名與管理端營運集中在同一個入口，讓明天的 Demo 可以順著角色流程自然切換。
-        </p>
+        <div class="eyebrow">{{ t('auth.hero.eyebrow') }}</div>
+        <h1 class="hero-title">{{ t('auth.hero.title') }}</h1>
+        <p class="hero-subtitle">{{ t('auth.hero.subtitle') }}</p>
         <div class="metric-grid" style="margin-top: 28px;">
           <div class="metric-card">
-            <span>家長 / 學生</span>
-            <strong>每週搭乘登記</strong>
-            <small>快速完成上下學班車安排</small>
+            <span>{{ t('common.roles.Parent') }} / {{ t('common.roles.Student') }}</span>
+            <strong>{{ t('auth.metrics.familyTitle') }}</strong>
+            <small>{{ t('auth.metrics.familyDescription') }}</small>
           </div>
           <div class="metric-card">
-            <span>老師</span>
-            <strong>行動點名作業</strong>
-            <small>即時標記已上車、請假與缺席</small>
+            <span>{{ t('common.roles.Teacher') }}</span>
+            <strong>{{ t('auth.metrics.teacherTitle') }}</strong>
+            <small>{{ t('auth.metrics.teacherDescription') }}</small>
           </div>
           <div class="metric-card">
-            <span>管理端</span>
-            <strong>路線 / 通知 / 報表</strong>
-            <small>用營運總覽快速確認系統狀態</small>
+            <span>{{ t('common.roles.Administrator') }}</span>
+            <strong>{{ t('auth.metrics.adminTitle') }}</strong>
+            <small>{{ t('auth.metrics.adminDescription') }}</small>
           </div>
         </div>
       </section>
@@ -59,40 +53,41 @@ function submit(account = form.account, password = form.password) {
       <section class="login-side">
         <div class="section-header">
           <div>
-            <h2>登入系統</h2>
-            <p class="muted">可以直接使用 Demo 帳號快速切換角色，或手動輸入帳號密碼。</p>
+            <h2>{{ t('auth.form.title') }}</h2>
+            <p class="muted">{{ t('auth.form.description') }}</p>
           </div>
+          <LocaleSwitcher />
         </div>
 
         <div class="shortcut-grid">
           <button
             v-for="demo in demoAccounts"
-            :key="demo.label"
+            :key="demo.id"
             class="shortcut-card"
             type="button"
-            :aria-label="demo.label"
+            :aria-label="t(`auth.accounts.${demo.id}.label`)"
             :disabled="busy"
             @click="submit(demo.account, demo.password)"
           >
-            <strong>{{ demo.label }}</strong>
-            <span>{{ demoDescriptions[demo.label] }}</span>
+            <strong>{{ t(`auth.accounts.${demo.id}.label`) }}</strong>
+            <span>{{ t(`auth.accounts.${demo.id}.description`) }}</span>
           </button>
         </div>
 
         <div class="surface-note" style="margin-top: 18px;">
-          建議從「家長 Demo」或「管理員 Demo」開始，比較容易完整展示登記與營運兩段流程。所有 Demo 帳號密碼皆為
+          {{ t('auth.form.hint') }}
           `P@ssw0rd!`。
         </div>
 
         <div class="field" style="margin-top: 18px;">
-          <label for="account">登入帳號</label>
-          <input id="account" v-model="form.account" autocomplete="username" placeholder="E0001 / T0001 / 0900-000-003 / S10001" />
-          <small>可輸入員工編號、手機號碼或學生帳號。</small>
+          <label for="account">{{ t('auth.form.accountLabel') }}</label>
+          <input id="account" v-model="form.account" autocomplete="username" :placeholder="t('auth.form.accountPlaceholder')" />
+          <small>{{ t('auth.form.accountHelp') }}</small>
         </div>
 
         <div class="field" style="margin-top: 14px;">
-          <label for="password">登入密碼</label>
-          <input id="password" v-model="form.password" type="password" autocomplete="current-password" placeholder="P@ssw0rd!" />
+          <label for="password">{{ t('auth.form.passwordLabel') }}</label>
+          <input id="password" v-model="form.password" type="password" autocomplete="current-password" :placeholder="t('auth.form.passwordPlaceholder')" />
         </div>
 
         <div v-if="errorMessage" class="alert error" style="margin-top: 14px;">
@@ -101,7 +96,7 @@ function submit(account = form.account, password = form.password) {
 
         <div class="button-row" style="margin-top: 18px;">
           <button class="button" type="button" :disabled="busy" @click="submit()">
-            {{ busy ? '登入中...' : '登入系統' }}
+            {{ busy ? t('common.actions.loggingIn') : t('common.actions.login') }}
           </button>
         </div>
       </section>
