@@ -4,6 +4,7 @@ import type { AdminLookupsResponse, NotificationDeliveryResponse, ReminderRunRes
 import {
   broadcastAudienceOptions,
   exportFormatOptions,
+  formatNotificationStatus,
   reportTypeOptions,
   tripDirectionOptions,
 } from '@/api/contracts'
@@ -292,7 +293,7 @@ onMounted(load)
               <td>{{ item.recipientEmail }}</td>
               <td>
                 <span class="status-badge" :class="historyTone(item)">
-                  {{ item.status }}
+                  {{ formatNotificationStatus(item.status) }}
                 </span>
               </td>
               <td>{{ item.sentAtUtc || '尚未送出' }}</td>

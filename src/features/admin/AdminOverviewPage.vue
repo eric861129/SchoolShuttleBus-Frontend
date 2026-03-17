@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import type { AdminLookupsResponse, NotificationDeliveryResponse, RouteResponse } from '@/api/contracts'
+import { formatNotificationStatus } from '@/api/contracts'
 import { authorizedJson, ApiError } from '@/api/http'
 import { useSessionStore } from '@/stores/session'
 
@@ -126,7 +127,7 @@ onMounted(load)
                 <p class="muted">{{ item.sentAtUtc || '尚未送出' }}</p>
               </div>
               <span class="status-badge" :class="item.errorMessage ? 'danger' : item.sentAtUtc ? 'success' : 'warning'">
-                {{ item.status }}
+                {{ formatNotificationStatus(item.status) }}
               </span>
             </div>
             <p class="muted" style="margin: 0;">{{ item.errorMessage || '寄送成功，無錯誤訊息。' }}</p>

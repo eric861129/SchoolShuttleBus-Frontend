@@ -526,25 +526,58 @@ textarea:focus-visible,
 
 .field input,
 .field select,
-.field textarea {
+.field textarea,
+.toggle-card select {
   width: 100%;
   border-radius: 16px;
   border: 1px solid rgba(23, 48, 75, 0.14);
   background: rgba(255, 255, 255, 0.96);
   padding: 13px 14px;
   color: #17304b;
+  font-size: 16px;
+  line-height: 1.35;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
 .field input:hover,
 .field select:hover,
-.field textarea:hover {
+.field textarea:hover,
+.toggle-card select:hover {
   border-color: rgba(31, 111, 255, 0.28);
 }
 
 .field textarea {
   min-height: 126px;
   resize: vertical;
+}
+
+.field input,
+.field select,
+.toggle-card select {
+  min-height: 54px;
+}
+
+.field select,
+.toggle-card select {
+  appearance: none;
+  cursor: pointer;
+  font-weight: 600;
+  padding-right: 48px;
+  background-image:
+    linear-gradient(45deg, transparent 50%, #4d6785 50%),
+    linear-gradient(135deg, #4d6785 50%, transparent 50%);
+  background-position:
+    calc(100% - 20px) calc(50% - 3px),
+    calc(100% - 14px) calc(50% - 3px);
+  background-size: 7px 7px, 7px 7px;
+  background-repeat: no-repeat;
+}
+
+.field select option,
+.toggle-card select option {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #17304b;
 }
 
 .alert {

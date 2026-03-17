@@ -173,3 +173,30 @@ export const reportTypeOptions = [
 ]
 
 export const exportFormatOptions = [{ value: 1 as ExportFormat, label: 'CSV' }]
+
+export const userRoleLabels: Record<UserRole, string> = {
+  Student: '學生',
+  Parent: '家長',
+  Teacher: '老師',
+  Administrator: '管理員',
+}
+
+export function formatUserRole(role: UserRole) {
+  return userRoleLabels[role] || role
+}
+
+const notificationStatusLabels: Record<string, string> = {
+  Pending: '待送出',
+  Queued: '排程中',
+  Processing: '處理中',
+  Sent: '已送出',
+  Delivered: '已送達',
+  Success: '成功',
+  Succeeded: '成功',
+  Failed: '失敗',
+  Error: '錯誤',
+}
+
+export function formatNotificationStatus(status: string) {
+  return notificationStatusLabels[status] || status
+}

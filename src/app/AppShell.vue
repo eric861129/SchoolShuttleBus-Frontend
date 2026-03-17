@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { formatUserRole } from '@/api/contracts'
 import { buildNavigation } from '@/app/navigation'
 import { useSessionStore } from '@/stores/session'
 
@@ -12,44 +13,44 @@ const navigation = computed(() => buildNavigation(session.roles))
 
 const pageMetaMap = {
   '/admin': {
-    eyebrow: 'Admin Command',
+    eyebrow: '管理總控',
     title: '管理總覽',
     description: '用更清楚的營運摘要，快速展示 Demo 資料與系統健康度。',
   },
   '/attendance': {
-    eyebrow: 'Teacher Flow',
+    eyebrow: '老師作業',
     title: '老師點名',
     description: '從建立點名到更新學生狀態，集中在同一個操作節奏內完成。',
   },
   '/routes': {
-    eyebrow: 'Route Studio',
+    eyebrow: '路線工作台',
     title: '路線管理',
     description: '以更直觀的方式查看路線、站點與教師指派資訊。',
   },
   '/operations': {
-    eyebrow: 'Operations Hub',
+    eyebrow: '營運中心',
     title: '營運作業',
     description: '把調度、廣播與報表匯出整理成適合 Demo 的作業入口。',
   },
   '/registrations': {
-    eyebrow: 'Family Portal',
+    eyebrow: '家長入口',
     title: '乘車登記',
     description: '讓家長或學生能快速完成一整週的上下學乘車安排。',
   },
   '/schedule': {
-    eyebrow: 'Weekly Preview',
+    eyebrow: '每週預覽',
     title: '本週預覽',
     description: '以清楚的時間軸檢視目前與下週預填的搭乘安排。',
   },
 } as const
 
 const pageMeta = computed(() => pageMetaMap[route.path as keyof typeof pageMetaMap] || {
-  eyebrow: 'School Shuttle Bus',
+  eyebrow: '交通車系統',
   title: '康橋交通車 Demo',
   description: '前端單頁應用，直接串接 Azure Web API。',
 })
 
-const roleSummary = computed(() => session.roles.join(' / ') || '訪客')
+const roleSummary = computed(() => session.roles.map((role) => formatUserRole(role)).join(' / ') || '訪客')
 const initials = computed(() => session.displayName.slice(0, 1))
 const todayLabel = computed(() =>
   new Intl.DateTimeFormat('zh-TW', {
@@ -69,7 +70,7 @@ async function handleLogout() {
   <div class="page-shell">
     <aside class="page-sidebar">
       <section class="sidebar-brand">
-        <div class="eyebrow">Kang Chiao Demo</div>
+        <div class="eyebrow">康橋 Demo</div>
         <h1>康橋交通車登記系統</h1>
         <p>明天 DEMO 可直接展示的交通車入口，串接 Azure Static Web Apps、App Service 與 Azure SQL。</p>
       </section>
