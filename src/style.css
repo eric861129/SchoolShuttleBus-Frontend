@@ -218,6 +218,7 @@ textarea:focus-visible,
 
 .page-content {
   padding: 32px;
+  min-width: 0;
 }
 
 .topbar {
@@ -321,6 +322,7 @@ textarea:focus-visible,
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 18px;
+  min-width: 0;
 }
 
 .section-header p {
@@ -445,6 +447,11 @@ textarea:focus-visible,
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+}
+
+.button-row > *,
+.toolbar > * {
+  min-width: 0;
 }
 
 .button,
@@ -733,6 +740,7 @@ textarea:focus-visible,
   border-radius: 22px;
   background: var(--surface-strong);
   box-shadow: var(--shadow-soft);
+  min-width: 0;
 }
 
 .dashboard-split {
@@ -762,6 +770,7 @@ textarea:focus-visible,
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
+  min-width: 0;
 }
 
 .day-options,
@@ -859,7 +868,7 @@ textarea:focus-visible,
   gap: 16px;
 }
 
-@media (max-width: 1180px) {
+@media (max-width: 900px) {
   .page-shell {
     grid-template-columns: 1fr;
   }
@@ -867,6 +876,48 @@ textarea:focus-visible,
   .page-sidebar {
     position: static;
     min-height: auto;
+    padding-bottom: 16px;
+  }
+
+  .sidebar-brand,
+  .sidebar-user-card,
+  .sidebar-note {
+    border-radius: 20px;
+  }
+
+  .sidebar-brand {
+    padding: 18px;
+  }
+
+  .sidebar-brand h1 {
+    font-size: 1.45rem;
+  }
+
+  .sidebar-nav {
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(180px, 1fr);
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 6px;
+    scrollbar-width: thin;
+  }
+
+  .sidebar-link {
+    min-height: 88px;
+  }
+
+  .topbar,
+  .section-header,
+  .day-card-header,
+  .route-card-header,
+  .record-card-header,
+  .timeline-card-header {
+    align-items: flex-start;
+  }
+
+  .topbar,
+  .section-header {
+    flex-wrap: wrap;
   }
 
   .dashboard-hero,
@@ -877,6 +928,12 @@ textarea:focus-visible,
   .grid.three,
   .day-options {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1180px) {
+  .page-content {
+    padding: 24px;
   }
 }
 
@@ -903,14 +960,99 @@ textarea:focus-visible,
     justify-content: flex-start;
   }
 
+  .sidebar-brand p,
+  .sidebar-link p,
+  .sidebar-note p {
+    font-size: 0.92rem;
+  }
+
+  .sidebar-nav {
+    grid-auto-columns: minmax(150px, 72vw);
+    margin-top: 18px;
+  }
+
+  .sidebar-link {
+    min-height: auto;
+    padding: 14px 16px;
+  }
+
+  .sidebar-link p {
+    display: none;
+  }
+
+  .sidebar-arrow {
+    align-self: center;
+  }
+
   .mini-stat {
     min-width: 0;
     flex: 1 1 180px;
+  }
+
+  .hero-copy h2,
+  .hero-copy h3 {
+    font-size: 1.6rem;
+  }
+
+  .metric-card strong,
+  .stat-card strong {
+    font-size: 1.5rem;
   }
 
   .metric-grid,
   .stats-grid,
   .timeline {
     grid-template-columns: 1fr;
+  }
+
+  .button-row,
+  .toolbar,
+  .route-card-actions,
+  .record-card-actions,
+  .status-actions {
+    flex-direction: column;
+  }
+
+  .button-row > *,
+  .toolbar > *,
+  .route-card-actions > *,
+  .record-card-actions > *,
+  .status-actions > * {
+    width: 100%;
+  }
+
+  .record-card-actions > div {
+    display: grid;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .status-button {
+    width: 100%;
+    text-align: center;
+  }
+
+  .section-header,
+  .day-card-header,
+  .route-card-header,
+  .record-card-header,
+  .timeline-card-header {
+    flex-direction: column;
+  }
+
+  .pill,
+  .status-badge {
+    align-self: flex-start;
+    max-width: 100%;
+  }
+
+  .checkbox-pill {
+    align-items: flex-start;
+  }
+
+  .table th,
+  .table td {
+    padding: 12px;
+    font-size: 0.94rem;
   }
 }
