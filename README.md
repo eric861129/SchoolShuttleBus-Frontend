@@ -18,7 +18,7 @@
 * **部署位置**：`Microsoft Azure` (App Service / Container Apps，透過 CI/CD 自動發佈)。
 
 
-* **資料庫 (Database)**：`Turso` (輕量級邊緣資料庫，適合 Demo 與高讀取情境)。
+* **資料庫 (Database)**：`Azure SQL Database` (關聯式資料庫，搭配 .NET 與 EF Core，便於 migration、測試與雲端部署)。
 * **版控與 CI/CD**：`GitHub` + `GitHub Actions`。
 
 ## 三、 使用者角色與權限 (User Roles & Permissions)
@@ -53,7 +53,7 @@
 
 ## 五、 資料庫初步設計 (Database Schema Draft)
 
-採用關聯式設計，以輕量級 Turso 實作，以下為核心 Table 規劃：
+採用關聯式設計，以 `Azure SQL Database` 實作，以下為核心 Table 規劃：
 
 * **`Parents` (家長表)**：`ParentID`, `Name`, `Phone`, `Email`...
 * **`Students` (學生表)**：`StudentID`, `Name`, `Grade` (年級，用於判斷是否為幼兒園), `ParentID` (Foreign Key，1對多關係), `DefaultRouteID`...
@@ -75,6 +75,5 @@
 * 開發者 `git push` 至 GitHub。
 * 觸發 GitHub Actions，執行 `.NET Build` 與 `Test`。
 * 透過 Publish Profile 將編譯好的 Package 自動部署至 **Azure App Service**。
-* API 連接位於邊緣節點的 **Turso DB**，確保極低的讀取延遲。
-
+* API 連接至 **Azure SQL Database**，由 Azure 環境管理連線與部署設定。
 
