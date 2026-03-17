@@ -1,79 +1,138 @@
-# 【產品需求規格書 PRD】康橋智慧交通車管理系統 (Demo 版)
+# School Shuttle Bus Frontend
 
-## 一、 專案概述 (Project Overview)
+康橋交通車登記系統 Demo 前端專案。這是一個以手機操作為優先的 Vue 3 單頁應用，提供家長 / 學生的乘車登記、老師點名、管理端營運總覽、路線管理與報表 / 通知操作。
 
-本專案旨在為康橋國際學校打造一套現代化的「智慧交通車管理系統」。針對學校涵蓋幼兒園至高中「一條龍」的學制特性，解決傳統紙本或被動點名帶來的行政負擔與安全隱憂。系統提供精準的乘車登記、即時點名與未到通報機制，並透過自動化提醒降低行政催收成本，全面提升學生乘車安全與行政效率。
+## 線上環境
 
-## 二、 系統架構與技術選型 (System Architecture)
+- Frontend: <https://wonderful-moss-0d3f8b800.1.azurestaticapps.net/>
+- Backend API: <https://app-school-shuttlebus-demo-e9c3h5c9btdafeak.westus2-01.azurewebsites.net/>
 
-本系統採用**前後端分離**架構，並導入 DevOps 精神建立 CI/CD 自動化流水線，展現現代化雲端開發標準。
+## 目前功能範圍
 
-* **前端 (Frontend)**：`Vue.js`
-* **UI/UX**：Mobile-first (手機端優先) 設計，支援 RWD (響應式網頁)，完美適配手機、平板與桌機。
-* **部署位置**：`GitHub Pages` (透過 GitHub Actions 自動打包部署)。
+### 角色與頁面
 
-
-* **後端 (Backend)**：`.NET Core Web API`
-* **架構**：RESTful API 設計，負責商業邏輯、權限驗證與資料處理。
-* **部署位置**：`Microsoft Azure` (App Service / Container Apps，透過 CI/CD 自動發佈)。
-
-
-* **資料庫 (Database)**：`Azure SQL Database` (關聯式資料庫，搭配 .NET 與 EF Core，便於 migration、測試與雲端部署)。
-* **版控與 CI/CD**：`GitHub` + `GitHub Actions`。
-
-## 三、 使用者角色與權限 (User Roles & Permissions)
-
-| 角色名稱 | 適用對象 | 權限說明 |
+| 角色 | 頁面 | 路由 |
 | --- | --- | --- |
-| **學生端** | 國中、高中生 | 可查看自己的乘車登記狀態；可自行登記下週搭乘狀況。 |
-| **家長端** | 幼兒園至高中生家長 | **必用(幼/小)**：代為登記/異動子女搭乘狀況。<br>
+| 家長 / 學生 | 登入、每週乘車登記、本週 / 下週預覽 | `/login` `/registrations` `/schedule` |
+| 老師 | 點名、路線查看與維護 | `/attendance` `/routes` |
+| 管理員 | 管理總覽、路線管理、營運作業 | `/admin` `/routes` `/operations` |
 
-<br>**選用(國/高)**：查看子女自行登記之狀況，或協助修改。 |
-| **管理端(小)** | 隨車老師、導護老師 | **車長權限**：僅能查看與管理「自己負責綁定之該輛交通車」的點名清單、乘車狀態與緊急聯絡資訊。 |
-| **管理端(大)** | 交通組行政、高階主管 | **總控權限**：可查看全校所有車輛登記狀況、跨路線調度、發送全域推播、匯出報表與異動所有資料。 |
+### 已完成的前端能力
 
-## 四、 核心功能需求 (Functional Requirements)
+- 手機優先的 RWD 介面，支援手機、平板與桌機。
+- `zh-TW` / `en-US` 雙語切換，使用 `vue-i18n` 管理共用文案與功能頁文字。
+- Demo 登入頁支援：
+  - 角色快速登入按鈕
+  - 語系切換按鈕
+  - QR Code 彈窗，方便面試官直接用手機掃碼操作
+- 與後端 Azure App Service API 串接：
+  - 登入 / refresh / logout
+  - 乘車登記
+  - 點名 session 與點名狀態更新
+  - 路線 / 站點 / 指派老師
+  - 廣播、提醒、報表下載、通知歷程
+- Azure Static Web Apps SPA fallback 已配置完成，直接刷新 `/login`、`/admin` 等前端路由不會 404。
 
-### 1. 智慧登記與提醒模組 (Registration & Alert)
+## 技術棧
 
-* **乘車登記**：家長或學生可勾選「下週一至週五」的「上學」與「放學」搭乘意願（預設可載入上週固定班表）。
-* **自動防呆提醒 (Alert)**：系統會自動偵測，若接近 **週四、週五** 仍未完成下週乘車登記，系統將自動觸發推播/Email 提醒家長或學生及早登記。
-* **狀態查詢**：隨時隨地透過手機查看當週與下週的乘車排程。
+- Vue 3
+- TypeScript
+- Vite
+- Vue Router
+- Pinia
+- Vue I18n
+- Day.js
+- QRCode
+- Vitest + Testing Library
+- Azure Static Web Apps
 
-### 2. 行動點名與安全聯絡模組 (Roll Call & Safety)
+## 本機開發
 
-* **隨車點名介面**：針對手機單手操作優化的 Checkbox 點名表。老師上車後快速勾選「已上車」。
-* **一鍵聯絡功能**：當點名發現「未到」時，名單旁會直接顯示該學生的**緊急聯絡電話**與**家長聯絡方式**，老師點擊即可直接撥號，無需切換系統查通訊錄。
+### 安裝
 
-### 3. 彈性路線與站點管理 (Route Management)
+```bash
+npm install
+```
 
-* **混合學制共乘**：系統支援同一台車混搭國小至高中生，點名表自動依站點或年級排序。
-* **多節點路線設定 (Point-to-Point)**：支援如 `站點A -> 站點B -> 林口康橋`，以及放學反向 `林口康橋 -> 站點B -> 站點A` 的獨立路線建置。
-* **幼兒園專車特例處理**：系統內建「幼兒園門到門 (Door-to-Door)」標籤，這類路線的站點將直接對應幼生住家地址，點名表會特別標示交接家長資訊。
+### 啟動開發環境
 
-## 五、 資料庫初步設計 (Database Schema Draft)
+```bash
+npm run dev
+```
 
-採用關聯式設計，以 `Azure SQL Database` 實作，以下為核心 Table 規劃：
+### 測試
 
-* **`Parents` (家長表)**：`ParentID`, `Name`, `Phone`, `Email`...
-* **`Students` (學生表)**：`StudentID`, `Name`, `Grade` (年級，用於判斷是否為幼兒園), `ParentID` (Foreign Key，1對多關係), `DefaultRouteID`...
-* **`Teachers` (老師表)**：`TeacherID`, `Name`, `Phone`, `RoleLevel` (大權限/小權限), `AssignedRouteID` (綁定之車輛路線)...
-* **`BusRoutes` (路線表)**：`RouteID`, `RouteName`, `Type` (一般/幼兒園特例), `Stops` (JSON格式記錄站點順序)...
-* **`Registrations` (乘車登記表)**：`RegID`, `StudentID`, `Date` (日期), `Direction` (上學/放學), `IsRegistered` (是否搭乘), `IsPresent` (實際點名是否出席)...
+```bash
+npm test
+```
 
-## 六、 CI/CD 部署流程規劃 (Deployment Pipeline)
+### 建置
 
-面試時展示此流程，可強烈證明您具備 DevOps 的實戰能力：
+```bash
+npm run build
+```
 
-1. **Frontend Pipeline (Vue.js)**：
-* 開發者 `git push` 至 GitHub `main` 分支。
-* 觸發 GitHub Actions，執行 `npm run build`。
-* 將打包後的 `dist` 資料夾自動推播至 `gh-pages` 分支，完成免費且穩定的前端發佈。
+### 預覽建置結果
 
+```bash
+npm run preview
+```
 
-2. **Backend Pipeline (.NET Core Web API)**：
-* 開發者 `git push` 至 GitHub。
-* 觸發 GitHub Actions，執行 `.NET Build` 與 `Test`。
-* 透過 Publish Profile 將編譯好的 Package 自動部署至 **Azure App Service**。
-* API 連接至 **Azure SQL Database**，由 Azure 環境管理連線與部署設定。
+## 環境變數
 
+前端 API 預設會連到已部署的 Demo 後端。如需改接其他後端，可設定：
+
+```bash
+VITE_API_BASE_URL=https://your-api-host
+```
+
+目前程式預設值位於 `src/api/config.ts`，未提供環境變數時會使用 Azure Demo API。
+
+## Demo 帳號
+
+登入頁提供四組 Demo 帳號快速切換，密碼皆為 `P@ssw0rd!`：
+
+| 身分 | 帳號 |
+| --- | --- |
+| 管理員 | `E0001` |
+| 老師 | `T0001` |
+| 家長 | `0900-000-003` |
+| 學生 | `S10001` |
+
+## 專案結構
+
+```text
+src/
+  api/            API contracts、HTTP client、API base config
+  app/            App shell、router、navigation
+  features/
+    admin/        管理總覽
+    attendance/   點名
+    auth/         登入與 Demo 帳號流程
+    operations/   廣播、提醒、報表、通知歷程
+    registration/ 乘車登記與每週預覽
+    routes/       路線與站點管理
+    shared/       共用頁面與元件
+  i18n/           多語系設定與訊息
+  shared/         日期與共用工具
+  stores/         Pinia session store
+  test/           測試初始化
+public/
+  staticwebapp.config.json Azure Static Web Apps SPA fallback 設定
+```
+
+## 部署方式
+
+本專案部署於 Azure Static Web Apps，GitHub Actions workflow 位於：
+
+- `.github/workflows/azure-static-web-apps-wonderful-moss-0d3f8b800.yml`
+
+部署流程：
+
+1. Push 到 `main`
+2. GitHub Actions 執行 build
+3. Azure Static Web Apps 自動更新正式站
+
+## 文件維護原則
+
+這份 README 應反映「目前前端實作狀態」，不是產品 PRD。若未來新增頁面、調整部署方式、修改 API 連線方式或加入新的語系 / 測試流程，請同步更新本文件。
