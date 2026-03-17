@@ -28,6 +28,17 @@ const translatedAttendanceStatusOptions = computed(() =>
 )
 const availableRoutes = computed(() => filterRoutesByDirection(routes.value, direction.value))
 
+function summarizeSession(sessionItem: AttendanceSessionResponse | null | undefined) {
+  const records = sessionItem?.records || []
+
+  return {
+    total: records.length,
+    boarded: records.filter((record) => record.status === 2).length,
+    onLeave: records.filter((record) => record.status === 3).length,
+    absent: records.filter((record) => record.status === 4).length,
+  }
+}
+
 function syncRouteSelection(preferredRouteId = routeId.value) {
   routeId.value = resolveAttendanceRouteId(routes.value, direction.value, preferredRouteId)
 }
@@ -54,16 +65,7 @@ function formatSessionDateLabel(value: string) {
   return formatDateLabelForLocale(value, locale.value)
 }
 
-const activeSessionSummary = computed(() => {
-  const records = activeSession.value?.records || []
-
-  return {
-    total: records.length,
-    boarded: records.filter((record) => record.status === 2).length,
-    onLeave: records.filter((record) => record.status === 3).length,
-    absent: records.filter((record) => record.status === 4).length,
-  }
-})
+const activeSessionSummary = computed(() => summarizeSession(activeSession.value))
 
 async function load() {
   try {
@@ -244,6 +246,7 @@ onMounted(load)
             <div>
               <strong>{{ item.routeName }}</strong>
               <p class="muted">{{ item.date }} / {{ item.direction === 1 ? t('common.tripDirection.toSchool') : t('common.tripDirection.homebound') }}</p>
+              <p class="muted">{{ t('attendance.roster.totalLabel') }} {{ summarizeSession(item).total }}</p>
             </div>
             <span class="status-badge" :class="item.isCompleted ? 'success' : 'info'">
               {{ item.isCompleted ? t('common.sessionState.completed') : t('common.sessionState.inProgress') }}
@@ -275,9 +278,9 @@ onMounted(load)
       <div v-else class="stack">
         <div class="stats-grid">
           <div class="stat-card">
-            <span>{{ t('attendance.roster.dateLabel') }}</span>
-            <strong>{{ activeSession.date }}</strong>
-            <small>{{ activeSession.direction === 1 ? t('common.tripDirection.toSchool') : t('common.tripDirection.homebound') }} / {{ activeSession.routeName }}</small>
+            <span>{{ t('attendance.roster.totalLabel') }}</span>
+            <strong>{{ activeSessionSummary.total }}</strong>
+            <small>{{ t('attendance.roster.totalHelp') }}</small>
           </div>
           <div class="stat-card">
             <span>{{ t('attendance.roster.boardedLabel') }}</span>
@@ -294,6 +297,7 @@ onMounted(load)
         <div class="empty-state">
           <strong>{{ activeSession.routeName }}</strong>
           <span>{{ formatSessionDateLabel(activeSession.date) }} / {{ activeSession.direction === 1 ? t('common.tripDirection.toSchool') : t('common.tripDirection.homebound') }}</span>
+          <span>{{ t('attendance.roster.totalStatus', { count: activeSessionSummary.total }) }}</span>
         </div>
 
         <div class="button-row">
@@ -326,9 +330,9 @@ onMounted(load)
 
         <div class="stats-grid">
           <div class="stat-card">
-            <span>{{ t('attendance.roster.dateLabel') }}</span>
-            <strong>{{ activeSession.date }}</strong>
-            <small>{{ activeSession.direction === 1 ? t('common.tripDirection.toSchool') : t('common.tripDirection.homebound') }} / {{ activeSession.routeName }}</small>
+            <span>{{ t('attendance.roster.totalLabel') }}</span>
+            <strong>{{ activeSessionSummary.total }}</strong>
+            <small>{{ t('attendance.roster.totalHelp') }}</small>
           </div>
           <div class="stat-card">
             <span>{{ t('attendance.roster.boardedLabel') }}</span>
@@ -342,7 +346,18 @@ onMounted(load)
           </div>
         </div>
 
-        <div class="list">
+        <div class="stat-card">
+          <span>{{ t('attendance.roster.dateLabel') }}</span>
+          <strong>{{ formatSessionDateLabel(activeSession.date) }}</strong>
+          <small>{{ activeSession.direction === 1 ? t('common.tripDirection.toSchool') : t('common.tripDirection.homebound') }} / {{ activeSession.routeName }}</small>
+        </div>
+
+        <div v-if="!activeSession.records.length" class="empty-state">
+          <strong>{{ t('attendance.roster.zeroTitle') }}</strong>
+          <span>{{ t('attendance.roster.zeroDescription') }}</span>
+        </div>
+
+        <div v-else class="list">
           <div v-for="record in activeSession.records" :key="record.attendanceRecordId" class="record-card">
             <div class="record-card-header">
               <div>
