@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import type { AdminLookupsResponse, RouteResponse } from '@/api/contracts'
 import { routeTypeOptions, tripDirectionOptions } from '@/api/contracts'
 import { authorizedJson, ApiError } from '@/api/http'
+import AppModal from '@/features/shared/AppModal.vue'
 import { useSessionStore } from '@/stores/session'
 
 const session = useSessionStore()
@@ -26,6 +27,7 @@ const stops = ref<{ sequence: number; stopName: string; address: string; handoff
 const assignStaffProfileId = ref('')
 const errorMessage = ref('')
 const statusMessage = ref('')
+const isEditModalOpen = ref(false)
 
 const selectedRoute = computed(() => routes.value.find((route) => route.routeId === selectedRouteId.value) || null)
 const isAdministrator = computed(() => session.roles.includes('Administrator'))
@@ -66,6 +68,7 @@ function syncSelectedRoute() {
     handoffContactName: stop.handoffContactName || '',
     handoffContactPhone: stop.handoffContactPhone || '',
   }))
+  assignStaffProfileId.value = ''
 }
 
 async function load() {
@@ -125,6 +128,7 @@ async function saveRoute() {
 
     statusMessage.value = t('routes.messages.saveSuccess')
     await load()
+    isEditModalOpen.value = false
   } catch (error) {
     errorMessage.value = error instanceof ApiError ? error.message : t('routes.messages.saveError')
   }
@@ -138,6 +142,12 @@ function addStop() {
     handoffContactName: '',
     handoffContactPhone: '',
   })
+}
+
+function openEditModal(routeId: string) {
+  selectedRouteId.value = routeId
+  syncSelectedRoute()
+  isEditModalOpen.value = true
 }
 
 watch(selectedRouteId, syncSelectedRoute)
@@ -242,7 +252,7 @@ onMounted(load)
           </div>
 
           <div class="route-card-actions">
-            <button class="button-ghost" type="button" @click="selectedRouteId = route.routeId">{{ t('common.actions.edit') }}</button>
+            <button class="button-ghost" type="button" @click="openEditModal(route.routeId)">{{ t('common.actions.edit') }}</button>
           </div>
         </div>
       </div>
@@ -280,6 +290,24 @@ onMounted(load)
           </div>
         </div>
 
+        <div class="button-row">
+          <button class="button" type="button" @click="openEditModal(selectedRoute.routeId)">{{ t('common.actions.edit') }}</button>
+        </div>
+      </div>
+      </section>
+    </div>
+
+    <AppModal
+      v-model="isEditModalOpen"
+      :title="t('routes.editPanel.title')"
+      :description="t('routes.editPanel.description')"
+      width="wide"
+      :close-label="t('common.actions.close')"
+    >
+      <div v-if="errorMessage" class="alert error">{{ errorMessage }}</div>
+      <div v-if="statusMessage" class="alert success">{{ statusMessage }}</div>
+
+      <div v-if="selectedRoute" class="stack">
         <div class="form-grid">
           <div class="field">
             <label>{{ t('common.labels.routeName') }}</label>
@@ -348,7 +376,6 @@ onMounted(load)
           <button v-if="isAdministrator" class="button" type="button" @click="saveRoute">{{ t('routes.editPanel.saveButton') }}</button>
         </div>
       </div>
-      </section>
-    </div>
+    </AppModal>
   </div>
 </template>

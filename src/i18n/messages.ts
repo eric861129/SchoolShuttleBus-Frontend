@@ -32,6 +32,7 @@ export const messages = {
         download: '下載報表',
         login: '登入系統',
         loggingIn: '登入中...',
+        close: '關閉',
       },
       labels: {
         currentRole: '目前身份',
@@ -577,6 +578,7 @@ export const messages = {
         download: 'Download report',
         login: 'Sign in',
         loggingIn: 'Signing in...',
+        close: 'Close',
       },
       labels: {
         currentRole: 'Current role',

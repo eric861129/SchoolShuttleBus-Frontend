@@ -5,11 +5,12 @@ import type { AttendanceRecordResponse, AttendanceSessionResponse, RouteResponse
 import { attendanceStatusOptions, tripDirectionOptions } from '@/api/contracts'
 import { authorizedJson, ApiError } from '@/api/http'
 import { filterRoutesByDirection, resolveAttendanceRouteId } from '@/features/attendance/attendanceForm'
-import { todayInTimeZone } from '@/shared/date'
+import AppModal from '@/features/shared/AppModal.vue'
+import { formatDateLabelForLocale, todayInTimeZone } from '@/shared/date'
 import { useSessionStore } from '@/stores/session'
 
 const session = useSessionStore()
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const routes = ref<RouteResponse[]>([])
 const sessions = ref<AttendanceSessionResponse[]>([])
 const activeSession = ref<AttendanceSessionResponse | null>(null)
@@ -18,6 +19,7 @@ const date = ref(todayInTimeZone())
 const direction = ref<TripDirection>(1)
 const errorMessage = ref('')
 const statusMessage = ref('')
+const isRosterModalOpen = ref(false)
 const translatedTripDirectionOptions = computed(() =>
   tripDirectionOptions.map((item) => ({ ...item, label: t(item.labelKey) })),
 )
@@ -46,6 +48,10 @@ function statusTone(status: AttendanceRecordResponse['status']) {
 function statusLabel(status: AttendanceRecordResponse['status']) {
   const matched = translatedAttendanceStatusOptions.value.find((item) => item.value === status)
   return matched?.label || t('common.fallback.unknownStatus')
+}
+
+function formatSessionDateLabel(value: string) {
+  return formatDateLabelForLocale(value, locale.value)
 }
 
 const activeSessionSummary = computed(() => {
@@ -93,6 +99,7 @@ async function openSession() {
 
     await load()
     statusMessage.value = t('attendance.messages.openSuccess')
+    isRosterModalOpen.value = true
   } catch (error) {
     errorMessage.value = error instanceof ApiError ? error.message : t('attendance.messages.openError')
   }
@@ -135,6 +142,11 @@ async function completeSession() {
   } catch (error) {
     errorMessage.value = error instanceof ApiError ? error.message : t('attendance.messages.completeError')
   }
+}
+
+function openRoster(sessionItem: AttendanceSessionResponse) {
+  activeSession.value = sessionItem
+  isRosterModalOpen.value = true
 }
 
 const visibleSessions = computed(() => sessions.value.slice().sort((left, right) => right.date.localeCompare(left.date)))
@@ -238,7 +250,7 @@ onMounted(load)
             </span>
           </div>
           <div class="route-card-actions">
-            <button class="button-ghost" type="button" @click="activeSession = item">{{ t('common.actions.view') }}</button>
+            <button class="button-ghost" type="button" @click="openRoster(item)">{{ t('common.actions.view') }}</button>
           </div>
         </div>
       </div>
@@ -261,6 +273,57 @@ onMounted(load)
       </div>
 
       <div v-else class="stack">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span>{{ t('attendance.roster.dateLabel') }}</span>
+            <strong>{{ activeSession.date }}</strong>
+            <small>{{ activeSession.direction === 1 ? t('common.tripDirection.toSchool') : t('common.tripDirection.homebound') }} / {{ activeSession.routeName }}</small>
+          </div>
+          <div class="stat-card">
+            <span>{{ t('attendance.roster.boardedLabel') }}</span>
+            <strong>{{ activeSessionSummary.boarded }}</strong>
+            <small>{{ t('attendance.roster.boardedHelp') }}</small>
+          </div>
+          <div class="stat-card">
+            <span>{{ t('attendance.roster.leaveAbsentLabel') }}</span>
+            <strong>{{ activeSessionSummary.onLeave + activeSessionSummary.absent }}</strong>
+            <small>{{ t('attendance.roster.leaveAbsentHelp') }}</small>
+          </div>
+        </div>
+
+        <div class="empty-state">
+          <strong>{{ activeSession.routeName }}</strong>
+          <span>{{ formatSessionDateLabel(activeSession.date) }} / {{ activeSession.direction === 1 ? t('common.tripDirection.toSchool') : t('common.tripDirection.homebound') }}</span>
+        </div>
+
+        <div class="button-row">
+          <button class="button" type="button" @click="openRoster(activeSession)">{{ t('common.actions.view') }}</button>
+        </div>
+      </div>
+      </section>
+    </div>
+
+    <AppModal
+      v-model="isRosterModalOpen"
+      :title="t('attendance.roster.title')"
+      :description="t('attendance.roster.description')"
+      width="wide"
+      :close-label="t('common.actions.close')"
+    >
+      <div v-if="errorMessage" class="alert error">{{ errorMessage }}</div>
+      <div v-if="statusMessage" class="alert success">{{ statusMessage }}</div>
+
+      <div v-if="activeSession" class="stack">
+        <div class="section-header">
+          <div>
+            <strong>{{ activeSession.routeName }}</strong>
+            <p class="muted">{{ activeSession.date }} / {{ activeSession.direction === 1 ? t('common.tripDirection.toSchool') : t('common.tripDirection.homebound') }}</p>
+          </div>
+          <button v-if="!activeSession.isCompleted" class="button-secondary" type="button" @click="completeSession">
+            {{ t('common.actions.complete') }}
+          </button>
+        </div>
+
         <div class="stats-grid">
           <div class="stat-card">
             <span>{{ t('attendance.roster.dateLabel') }}</span>
@@ -315,7 +378,6 @@ onMounted(load)
           </div>
         </div>
       </div>
-      </section>
-    </div>
+    </AppModal>
   </div>
 </template>
