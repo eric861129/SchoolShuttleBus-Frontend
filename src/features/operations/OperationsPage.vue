@@ -1,0 +1,243 @@
+<script setup lang="ts">
+import { onMounted, ref } from 'vue'
+import type { AdminLookupsResponse, NotificationDeliveryResponse, ReminderRunResponse, ReportExportResponse, RouteResponse } from '@/api/contracts'
+import {
+  broadcastAudienceOptions,
+  exportFormatOptions,
+  reportTypeOptions,
+  tripDirectionOptions,
+} from '@/api/contracts'
+import { authorizedDownload, authorizedJson, ApiError } from '@/api/http'
+import { addDays, mondayOfWeek } from '@/shared/date'
+import { useSessionStore } from '@/stores/session'
+
+const session = useSessionStore()
+const lookups = ref<AdminLookupsResponse | null>(null)
+const routes = ref<RouteResponse[]>([])
+const history = ref<NotificationDeliveryResponse[]>([])
+const statusMessage = ref('')
+const errorMessage = ref('')
+
+const dispatchForm = ref({
+  studentId: '',
+  routeId: '',
+  date: new Date().toISOString().slice(0, 10),
+  direction: 1 as 1 | 2,
+})
+
+const broadcastForm = ref({
+  audience: 1 as 1 | 2 | 3 | 4,
+  subject: 'School Shuttle Bus Demo 通知',
+  body: '',
+})
+
+const reportForm = ref({
+  reportType: 1 as 1 | 2 | 3,
+  exportFormat: 1 as 1,
+  startDate: mondayOfWeek(),
+  endDate: addDays(mondayOfWeek(), 4),
+})
+
+async function load() {
+  try {
+    const [lookupPayload, routePayload, historyPayload] = await Promise.all([
+      authorizedJson<AdminLookupsResponse>(session, '/api/admin/lookups'),
+      authorizedJson<RouteResponse[]>(session, '/api/routes'),
+      authorizedJson<NotificationDeliveryResponse[]>(session, '/api/notifications/history'),
+    ])
+
+    lookups.value = lookupPayload
+    routes.value = routePayload
+    history.value = historyPayload
+    dispatchForm.value.studentId = dispatchForm.value.studentId || lookupPayload.students[0]?.studentId || ''
+    dispatchForm.value.routeId = dispatchForm.value.routeId || routePayload[0]?.routeId || ''
+  } catch (error) {
+    errorMessage.value = error instanceof ApiError ? error.message : '載入營運作業資料失敗。'
+  }
+}
+
+async function createDispatch() {
+  try {
+    await authorizedJson(session, '/api/admin/dispatches', {
+      method: 'POST',
+      body: dispatchForm.value,
+    })
+    statusMessage.value = '已建立調度記錄。'
+  } catch (error) {
+    errorMessage.value = error instanceof ApiError ? error.message : '建立調度失敗。'
+  }
+}
+
+async function sendBroadcast() {
+  try {
+    const result = await authorizedJson<{ deliveryCount: number }>(session, '/api/admin/broadcasts', {
+      method: 'POST',
+      body: broadcastForm.value,
+    })
+    statusMessage.value = `廣播已送出，共 ${result.deliveryCount} 筆。`
+    await load()
+  } catch (error) {
+    errorMessage.value = error instanceof ApiError ? error.message : '發送廣播失敗。'
+  }
+}
+
+async function exportReport() {
+  try {
+    const report = await authorizedJson<ReportExportResponse>(session, '/api/admin/reports', {
+      method: 'POST',
+      body: reportForm.value,
+    })
+    const file = await authorizedDownload(session, `/api/admin/reports/${report.reportExportId}`)
+    const url = URL.createObjectURL(file.blob)
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = file.fileName
+    anchor.click()
+    URL.revokeObjectURL(url)
+    statusMessage.value = `報表 ${report.fileName} 已下載。`
+  } catch (error) {
+    errorMessage.value = error instanceof ApiError ? error.message : '匯出報表失敗。'
+  }
+}
+
+async function runReminders() {
+  try {
+    const result = await authorizedJson<ReminderRunResponse>(session, '/api/notifications/reminders/run', {
+      method: 'POST',
+    })
+    statusMessage.value = `提醒工作已執行，共送出 ${result.deliveryCount} 筆通知。`
+    await load()
+  } catch (error) {
+    errorMessage.value = error instanceof ApiError ? error.message : '執行提醒失敗。'
+  }
+}
+
+onMounted(load)
+</script>
+
+<template>
+  <div class="grid">
+    <div v-if="statusMessage" class="alert success">{{ statusMessage }}</div>
+    <div v-if="errorMessage" class="alert error">{{ errorMessage }}</div>
+
+    <div class="grid three">
+      <section class="panel">
+        <div class="section-header">
+          <h3>建立調度</h3>
+        </div>
+        <div class="grid">
+          <div class="field">
+            <label>學生</label>
+            <select v-model="dispatchForm.studentId">
+              <option v-for="student in lookups?.students || []" :key="student.studentId" :value="student.studentId">
+                {{ student.studentNumber }} / {{ student.studentName }}
+              </option>
+            </select>
+          </div>
+          <div class="field">
+            <label>路線</label>
+            <select v-model="dispatchForm.routeId">
+              <option v-for="route in routes" :key="route.routeId" :value="route.routeId">{{ route.routeName }}</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>日期</label>
+            <input v-model="dispatchForm.date" type="date" />
+          </div>
+          <div class="field">
+            <label>方向</label>
+            <select v-model="dispatchForm.direction">
+              <option v-for="item in tripDirectionOptions" :key="item.value" :value="item.value">{{ item.label }}</option>
+            </select>
+          </div>
+        </div>
+        <div class="button-row" style="margin-top: 16px;">
+          <button class="button" type="button" @click="createDispatch">建立調度</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="section-header">
+          <h3>廣播通知</h3>
+        </div>
+        <div class="grid">
+          <div class="field">
+            <label>對象</label>
+            <select v-model="broadcastForm.audience">
+              <option v-for="item in broadcastAudienceOptions" :key="item.value" :value="item.value">{{ item.label }}</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>主旨</label>
+            <input v-model="broadcastForm.subject" />
+          </div>
+          <div class="field">
+            <label>內容</label>
+            <textarea v-model="broadcastForm.body" />
+          </div>
+        </div>
+        <div class="button-row" style="margin-top: 16px;">
+          <button class="button" type="button" @click="sendBroadcast">送出廣播</button>
+          <button class="button-secondary" type="button" @click="runReminders">執行提醒</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="section-header">
+          <h3>報表匯出</h3>
+        </div>
+        <div class="grid">
+          <div class="field">
+            <label>報表類型</label>
+            <select v-model="reportForm.reportType">
+              <option v-for="item in reportTypeOptions" :key="item.value" :value="item.value">{{ item.label }}</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>格式</label>
+            <select v-model="reportForm.exportFormat">
+              <option v-for="item in exportFormatOptions" :key="item.value" :value="item.value">{{ item.label }}</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>開始日期</label>
+            <input v-model="reportForm.startDate" type="date" />
+          </div>
+          <div class="field">
+            <label>結束日期</label>
+            <input v-model="reportForm.endDate" type="date" />
+          </div>
+        </div>
+        <div class="button-row" style="margin-top: 16px;">
+          <button class="button" type="button" @click="exportReport">下載報表</button>
+        </div>
+      </section>
+    </div>
+
+    <section class="panel">
+      <div class="section-header">
+        <h3>通知歷程</h3>
+      </div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>收件人</th>
+              <th>狀態</th>
+              <th>送出時間</th>
+              <th>錯誤訊息</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="item in history" :key="item.notificationDeliveryId">
+              <td>{{ item.recipientEmail }}</td>
+              <td>{{ item.status }}</td>
+              <td>{{ item.sentAtUtc || '尚未送出' }}</td>
+              <td>{{ item.errorMessage || '-' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</template>
