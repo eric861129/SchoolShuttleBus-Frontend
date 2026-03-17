@@ -1,37 +1,27 @@
 # School Shuttle Bus Frontend
 
-康橋交通車登記系統 Demo 前端專案。這是一個以手機操作為優先的 Vue 3 單頁應用，提供家長 / 學生的乘車登記、老師點名、管理端營運總覽、路線管理與報表 / 通知操作。
+康橋交通車登記系統前端專案。這是一個以手機操作為優先的 Vue 3 單頁應用，涵蓋家長 / 學生乘車登記、老師點名、管理端總覽、路線管理與營運作業。
 
 ## 線上環境
 
 - Frontend: <https://wonderful-moss-0d3f8b800.1.azurestaticapps.net/>
 - Backend API: <https://app-school-shuttlebus-demo-e9c3h5c9btdafeak.westus2-01.azurewebsites.net/>
 
-## 目前功能範圍
+## 功能範圍
 
-### 角色與頁面
-
-| 角色 | 頁面 | 路由 |
+| 角色 | 主要頁面 | 路由 |
 | --- | --- | --- |
 | 家長 / 學生 | 登入、每週乘車登記、本週 / 下週預覽 | `/login` `/registrations` `/schedule` |
 | 老師 | 點名、路線查看與維護 | `/attendance` `/routes` |
 | 管理員 | 管理總覽、路線管理、營運作業 | `/admin` `/routes` `/operations` |
 
-### 已完成的前端能力
+目前前端已完成：
 
 - 手機優先的 RWD 介面，支援手機、平板與桌機。
-- `zh-TW` / `en-US` 雙語切換，使用 `vue-i18n` 管理共用文案與功能頁文字。
-- Demo 登入頁支援：
-  - 角色快速登入按鈕
-  - 語系切換按鈕
-  - QR Code 彈窗，方便面試官直接用手機掃碼操作
-- 與後端 Azure App Service API 串接：
-  - 登入 / refresh / logout
-  - 乘車登記
-  - 點名 session 與點名狀態更新
-  - 路線 / 站點 / 指派老師
-  - 廣播、提醒、報表下載、通知歷程
-- Azure Static Web Apps SPA fallback 已配置完成，直接刷新 `/login`、`/admin` 等前端路由不會 404。
+- `zh-TW` / `en-US` 雙語切換，使用 `vue-i18n` 管理共用與頁面文案。
+- 登入頁快速切換 Demo 帳號、語系切換、QR Code 掃碼登入。
+- 與後端 API 串接登入、乘車登記、點名、路線、通知、提醒與報表功能。
+- Azure Static Web Apps SPA fallback，直接刷新前端路由不會 404。
 
 ## 技術棧
 
@@ -46,7 +36,7 @@
 - Vitest + Testing Library
 - Azure Static Web Apps
 
-## 本機開發
+## 快速開始
 
 ### 安裝
 
@@ -60,13 +50,13 @@ npm install
 npm run dev
 ```
 
-### 測試
+### 執行測試
 
 ```bash
 npm test
 ```
 
-### 建置
+### 建置正式版
 
 ```bash
 npm run build
@@ -80,13 +70,13 @@ npm run preview
 
 ## 環境變數
 
-前端 API 預設會連到已部署的 Demo 後端。如需改接其他後端，可設定：
+前端預設會連到已部署的 Demo 後端。如需改接其他 API，可設定：
 
 ```bash
 VITE_API_BASE_URL=https://your-api-host
 ```
 
-目前程式預設值位於 `src/api/config.ts`，未提供環境變數時會使用 Azure Demo API。
+未提供環境變數時，會使用 `src/api/config.ts` 內的預設 API 位址。
 
 ## Demo 帳號
 
@@ -121,18 +111,17 @@ public/
   staticwebapp.config.json Azure Static Web Apps SPA fallback 設定
 ```
 
-## 部署方式
+## 文件索引
 
-本專案部署於 Azure Static Web Apps，GitHub Actions workflow 位於：
+- `README.md`
+  - 專案總覽、功能範圍、快速開始、Demo 帳號。
+- `docs/DEVELOPMENT.md`
+  - 本機開發、目錄分工、i18n 與手機優先開發注意事項。
+- `docs/DEPLOYMENT.md`
+  - Azure Static Web Apps 部署流程、SPA fallback 與部署後檢查項目。
 
-- `.github/workflows/azure-static-web-apps-wonderful-moss-0d3f8b800.yml`
+## 文件整理原則
 
-部署流程：
-
-1. Push 到 `main`
-2. GitHub Actions 執行 build
-3. Azure Static Web Apps 自動更新正式站
-
-## 文件維護原則
-
-這份 README 應反映「目前前端實作狀態」，不是產品 PRD。若未來新增頁面、調整部署方式、修改 API 連線方式或加入新的語系 / 測試流程，請同步更新本文件。
+- 根目錄只保留專案入口文件 `README.md`。
+- 細節文件集中在 `docs/`。
+- 文件內容以「目前已實作的前端專案」為準，不放過時規劃或已失效說明。
