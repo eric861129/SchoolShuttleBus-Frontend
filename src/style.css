@@ -304,14 +304,14 @@ textarea:focus-visible,
   box-shadow: 0 10px 24px rgba(18, 59, 118, 0.08);
 }
 
-.topbar > *,
-.section-header > *,
-.day-card-header > *,
-.route-card-header > *,
-.record-card-header > *,
-.timeline-card-header > *,
-.route-card-actions > *,
-.record-card-actions > * {
+.topbar>*,
+.section-header>*,
+.day-card-header>*,
+.route-card-header>*,
+.record-card-header>*,
+.timeline-card-header>*,
+.route-card-actions>*,
+.record-card-actions>* {
   min-width: 0;
 }
 
@@ -508,8 +508,8 @@ textarea:focus-visible,
   gap: 10px;
 }
 
-.button-row > *,
-.toolbar > * {
+.button-row>*,
+.toolbar>* {
   min-width: 0;
 }
 
@@ -1142,14 +1142,19 @@ textarea:focus-visible,
 }
 
 @media (max-width: 720px) {
+
   html,
   body,
   #app {
     overflow-x: clip;
   }
 
-  .page-content,
   .page-sidebar {
+    padding: 14px;
+    overflow: hidden;
+  }
+
+  .page-content {
     padding: 14px;
   }
 
@@ -1196,6 +1201,8 @@ textarea:focus-visible,
   .sidebar-nav {
     grid-auto-columns: minmax(78vw, 1fr);
     margin-top: 18px;
+    width: 100%;
+    overflow-x: auto;
   }
 
   .sidebar-link {
@@ -1241,11 +1248,11 @@ textarea:focus-visible,
     flex-direction: column;
   }
 
-  .button-row > *,
-  .toolbar > *,
-  .route-card-actions > *,
-  .record-card-actions > *,
-  .status-actions > * {
+  .button-row>*,
+  .toolbar>*,
+  .route-card-actions>*,
+  .record-card-actions>*,
+  .status-actions>* {
     width: 100%;
   }
 
@@ -1255,7 +1262,7 @@ textarea:focus-visible,
     min-width: 0;
   }
 
-  .record-card-actions > div {
+  .record-card-actions>div {
     display: grid;
     gap: 8px;
     width: 100%;
@@ -1323,6 +1330,7 @@ textarea:focus-visible,
   position: static;
   min-height: auto;
   padding: 14px 14px 16px;
+  overflow: hidden;
 }
 
 :root.is-handset .page-content {
@@ -1408,11 +1416,11 @@ textarea:focus-visible,
 :root.is-handset .locale-switcher,
 :root.is-handset .locale-toggle,
 :root.is-handset .qr-trigger,
-:root.is-handset .button-row > *,
-:root.is-handset .toolbar > *,
-:root.is-handset .route-card-actions > *,
-:root.is-handset .record-card-actions > *,
-:root.is-handset .status-actions > * {
+:root.is-handset .button-row>*,
+:root.is-handset .toolbar>*,
+:root.is-handset .route-card-actions>*,
+:root.is-handset .record-card-actions>*,
+:root.is-handset .status-actions>* {
   width: 100%;
   min-width: 0;
 }
@@ -1457,7 +1465,7 @@ textarea:focus-visible,
   box-shadow: none;
 }
 
-:root.is-handset .record-card-actions > div {
+:root.is-handset .record-card-actions>div {
   display: grid;
   gap: 8px;
   width: 100%;
