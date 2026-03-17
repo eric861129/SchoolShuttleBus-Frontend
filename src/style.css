@@ -1087,6 +1087,39 @@ textarea:focus-visible,
   }
 
   .topbar,
+  .topbar-meta,
+  .section-header,
+  .day-card-header,
+  .route-card-header,
+  .record-card-header,
+  .timeline-card-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .topbar-meta,
+  .mini-stat,
+  .locale-switcher {
+    width: 100%;
+  }
+
+  .mini-stat,
+  .locale-switcher,
+  .locale-toggle {
+    min-width: 0;
+  }
+
+  .locale-toggle {
+    width: 100%;
+    white-space: normal;
+  }
+
+  .pill,
+  .status-badge {
+    align-self: flex-start;
+  }
+
+  .topbar,
   .section-header {
     flex-wrap: wrap;
   }
