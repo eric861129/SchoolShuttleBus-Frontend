@@ -4,6 +4,11 @@ export const messages = {
       label: '語言',
       'zh-TW': '繁體中文',
       'en-US': 'English',
+      short: {
+        'zh-TW': '中文',
+        'en-US': 'EN',
+      },
+      toggle: '切換 {locale}',
     },
     common: {
       roles: {
@@ -207,6 +212,15 @@ export const messages = {
         accountHelp: '可輸入員工編號、手機號碼或學生帳號。',
         passwordLabel: '登入密碼',
         passwordPlaceholder: '請輸入密碼',
+      },
+      qr: {
+        trigger: '手機掃碼',
+        title: '掃描登入頁 QR Code',
+        description: '讓面試官可直接用手機開啟目前這個登入頁，現場操作 Demo。',
+        loading: '正在產生 QR Code...',
+        error: 'QR Code 產生失敗，請直接點擊下方連結。',
+        openLink: '開啟登入頁連結',
+        close: '關閉',
       },
       accounts: {
         admin: {
@@ -520,6 +534,11 @@ export const messages = {
       label: 'Language',
       'zh-TW': '繁體中文',
       'en-US': 'English',
+      short: {
+        'zh-TW': '中文',
+        'en-US': 'EN',
+      },
+      toggle: 'Switch to {locale}',
     },
     common: {
       roles: {
@@ -723,6 +742,15 @@ export const messages = {
         accountHelp: 'Employee number, phone number, or student account all work here.',
         passwordLabel: 'Password',
         passwordPlaceholder: 'Enter password',
+      },
+      qr: {
+        trigger: 'Mobile QR',
+        title: 'Scan the login QR code',
+        description: 'Let interviewers open this login page on their phones and try the demo directly.',
+        loading: 'Generating QR code...',
+        error: 'Failed to generate the QR code. Please use the link below instead.',
+        openLink: 'Open login page',
+        close: 'Close',
       },
       accounts: {
         admin: {

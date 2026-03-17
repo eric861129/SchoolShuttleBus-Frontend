@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { reactive } from 'vue'
+import { computed, reactive, ref } from 'vue'
+import QRCode from 'qrcode'
 import { useI18n } from 'vue-i18n'
 import { demoAccounts } from '@/features/auth/demoAccounts'
 import LocaleSwitcher from '@/features/shared/LocaleSwitcher.vue'
@@ -13,14 +14,56 @@ const emit = defineEmits<{
   authenticate: [{ account: string; password: string }]
 }>()
 const { t } = useI18n()
+const showQrCode = ref(false)
+const qrCodeDataUrl = ref('')
+const qrCodeBusy = ref(false)
+const qrCodeError = ref('')
 
 const form = reactive({
   account: '',
   password: '',
 })
 
+const loginPageUrl = computed(() => {
+  if (typeof window === 'undefined') {
+    return 'https://wonderful-moss-0d3f8b800.1.azurestaticapps.net/login'
+  }
+
+  return new URL('/login', window.location.origin).toString()
+})
+
 function submit(account = form.account, password = form.password) {
   emit('authenticate', { account, password })
+}
+
+async function openQrCode() {
+  showQrCode.value = true
+
+  if (qrCodeDataUrl.value || qrCodeBusy.value) {
+    return
+  }
+
+  qrCodeBusy.value = true
+  qrCodeError.value = ''
+
+  try {
+    qrCodeDataUrl.value = await QRCode.toDataURL(loginPageUrl.value, {
+      width: 280,
+      margin: 1,
+      color: {
+        dark: '#123b76',
+        light: '#ffffff',
+      },
+    })
+  } catch {
+    qrCodeError.value = t('auth.qr.error')
+  } finally {
+    qrCodeBusy.value = false
+  }
+}
+
+function closeQrCode() {
+  showQrCode.value = false
 }
 </script>
 
@@ -56,7 +99,12 @@ function submit(account = form.account, password = form.password) {
             <h2>{{ t('auth.form.title') }}</h2>
             <p class="muted">{{ t('auth.form.description') }}</p>
           </div>
-          <LocaleSwitcher />
+          <div class="login-side-tools">
+            <button class="button-ghost qr-trigger" type="button" @click="openQrCode">
+              {{ t('auth.qr.trigger') }}
+            </button>
+            <LocaleSwitcher />
+          </div>
         </div>
 
         <div class="shortcut-grid">
@@ -100,6 +148,33 @@ function submit(account = form.account, password = form.password) {
           </button>
         </div>
       </section>
+    </div>
+
+    <div v-if="showQrCode" class="qr-overlay" @click.self="closeQrCode">
+      <div class="qr-modal panel">
+        <div class="section-header">
+          <div>
+            <h3>{{ t('auth.qr.title') }}</h3>
+            <p class="muted">{{ t('auth.qr.description') }}</p>
+          </div>
+          <button class="button-ghost" type="button" @click="closeQrCode">{{ t('auth.qr.close') }}</button>
+        </div>
+
+        <div class="qr-card">
+          <div v-if="qrCodeBusy" class="empty-state qr-placeholder">
+            <strong>{{ t('auth.qr.loading') }}</strong>
+          </div>
+          <img v-else-if="qrCodeDataUrl" class="qr-image" :src="qrCodeDataUrl" :alt="t('auth.qr.title')" />
+          <div v-else class="empty-state qr-placeholder">
+            <strong>{{ qrCodeError || t('auth.qr.error') }}</strong>
+          </div>
+
+          <a class="button-secondary qr-link" :href="loginPageUrl" target="_blank" rel="noreferrer">
+            {{ t('auth.qr.openLink') }}
+          </a>
+          <p class="qr-url">{{ loginPageUrl }}</p>
+        </div>
+      </div>
     </div>
   </div>
 </template>

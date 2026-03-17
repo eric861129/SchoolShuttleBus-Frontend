@@ -5,26 +5,21 @@ import { applyLocale, supportedLocales, type AppLocale } from '@/i18n'
 
 const { locale, t } = useI18n()
 
-const selectedLocale = computed({
-  get: () => locale.value as AppLocale,
-  set: (value: AppLocale) => applyLocale(value),
-})
-
-const localeOptions = computed(() =>
-  supportedLocales.map((value) => ({
-    value,
-    label: t(`locale.${value}`),
-  })),
+const currentLocale = computed(() => locale.value as AppLocale)
+const nextLocale = computed<AppLocale>(() =>
+  currentLocale.value === supportedLocales[0] ? supportedLocales[1] : supportedLocales[0],
 )
+const toggleLabel = computed(() => t('locale.toggle', { locale: t(`locale.short.${nextLocale.value}`) }))
+
+function toggleLocale() {
+  applyLocale(nextLocale.value)
+}
 </script>
 
 <template>
   <div class="locale-switcher">
-    <label for="locale-switcher">{{ t('locale.label') }}</label>
-    <select id="locale-switcher" v-model="selectedLocale">
-      <option v-for="item in localeOptions" :key="item.value" :value="item.value">
-        {{ item.label }}
-      </option>
-    </select>
+    <button class="button-ghost locale-toggle" type="button" :aria-label="toggleLabel" @click="toggleLocale">
+      {{ toggleLabel }}
+    </button>
   </div>
 </template>
