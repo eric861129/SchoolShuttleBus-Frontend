@@ -53,6 +53,7 @@ export interface WeeklyRegistrationResponse {
   studentName: string
   weekStart: string
   days: RegistrationDayResponse[]
+  hasSubmittedWeek: boolean
 }
 
 export interface StudentRegistrationSummaryResponse {

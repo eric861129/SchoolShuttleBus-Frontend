@@ -646,6 +646,14 @@ textarea:focus-visible,
   border: 1px solid transparent;
 }
 
+.alert strong {
+  display: block;
+}
+
+.alert-copy {
+  margin: 8px 0 0;
+}
+
 .alert.info {
   background: #eef5ff;
   color: #1847ad;
@@ -658,10 +666,20 @@ textarea:focus-visible,
   border-color: rgba(25, 138, 97, 0.16);
 }
 
+.alert.warning {
+  background: #fff6e8;
+  color: #92520b;
+  border-color: rgba(185, 108, 18, 0.2);
+}
+
 .alert.error {
   background: #fff1f1;
   color: #9e2525;
   border-color: rgba(190, 59, 59, 0.16);
+}
+
+.emphasis-alert {
+  box-shadow: 0 16px 34px rgba(185, 108, 18, 0.14);
 }
 
 .table-wrap {
@@ -964,6 +982,18 @@ textarea:focus-visible,
 .toggle-card.active {
   border-color: rgba(31, 111, 255, 0.24);
   background: rgba(237, 244, 255, 0.96);
+}
+
+.day-card.locked {
+  border-color: rgba(190, 59, 59, 0.16);
+}
+
+.day-card.locked:hover {
+  transform: none;
+}
+
+.day-card.locked .toggle-card {
+  background: rgba(249, 250, 252, 0.96);
 }
 
 .checkbox-pill {

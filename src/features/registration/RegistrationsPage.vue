@@ -8,13 +8,16 @@ import type {
   WeeklyRegistrationResponse,
 } from '@/api/contracts'
 import { authorizedJson, ApiError } from '@/api/http'
-import { formatDateLabelForLocale, nextWeekMonday } from '@/shared/date'
+import { formatDateLabelForLocale, nextWeekMonday, todayInTimeZone, weekdayInTimeZone } from '@/shared/date'
 import { useSessionStore } from '@/stores/session'
 
 const session = useSessionStore()
 const { locale, t } = useI18n()
+const taipeiToday = todayInTimeZone()
+const currentWeekday = weekdayInTimeZone()
+const nextWeekStart = nextWeekMonday(taipeiToday)
 const selectedStudentId = ref(session.context?.students[0]?.studentId || '')
-const weekStart = ref(nextWeekMonday())
+const weekStart = ref(nextWeekStart)
 const summary = ref<StudentRegistrationSummaryResponse | null>(null)
 const routes = ref<RouteResponse[]>([])
 const editableWeek = ref<WeeklyRegistrationResponse | null>(null)
@@ -31,6 +34,53 @@ const configuredDays = computed(() => formDays.value.filter((day) => day.toSchoo
 const weeklyTrips = computed(() =>
   formDays.value.reduce((sum, day) => sum + Number(day.toSchool) + Number(day.homebound), 0),
 )
+const hasSubmittedWeek = computed(() => editableWeek.value?.hasSubmittedWeek ?? false)
+const isNextWeekSelected = computed(() => weekStart.value === nextWeekStart)
+const isWednesday = currentWeekday === 3
+const isThursday = currentWeekday === 4
+const isFriday = currentWeekday === 5
+const showReminderBanner = computed(() => isNextWeekSelected.value && !hasSubmittedWeek.value && (isWednesday || isThursday))
+const reminderTitleKey = computed(() =>
+  isWednesday ? 'registrations.reminders.wednesdayTitle' : 'registrations.reminders.thursdayTitle',
+)
+const reminderDescriptionKey = computed(() =>
+  isWednesday ? 'registrations.reminders.wednesdayDescription' : 'registrations.reminders.thursdayDescription',
+)
+const isThursdayRegisterOnly = computed(() => isNextWeekSelected.value && isThursday && !hasSubmittedWeek.value)
+const isThursdayLocked = computed(() => isNextWeekSelected.value && isThursday && hasSubmittedWeek.value)
+const isFridayLocked = computed(() => isNextWeekSelected.value && isFriday)
+const isWeekLocked = computed(() => isThursdayLocked.value || isFridayLocked.value)
+const registrationWindowTitleKey = computed(() => {
+  if (isFridayLocked.value) {
+    return 'registrations.window.fridayLockedTitle'
+  }
+
+  if (isThursdayLocked.value) {
+    return 'registrations.window.thursdayLockedTitle'
+  }
+
+  if (isThursdayRegisterOnly.value) {
+    return 'registrations.window.thursdayRegisterOnlyTitle'
+  }
+
+  return ''
+})
+const registrationWindowDescriptionKey = computed(() => {
+  if (isFridayLocked.value) {
+    return 'registrations.window.fridayLockedDescription'
+  }
+
+  if (isThursdayLocked.value) {
+    return 'registrations.window.thursdayLockedDescription'
+  }
+
+  if (isThursdayRegisterOnly.value) {
+    return 'registrations.window.thursdayRegisterOnlyDescription'
+  }
+
+  return ''
+})
+const showWindowBanner = computed(() => Boolean(registrationWindowTitleKey.value))
 
 function getRouteName(routeId: string | null) {
   return routes.value.find((route) => route.routeId === routeId)?.routeName || t('registrations.summary.noRouteSelected')
@@ -98,6 +148,12 @@ async function saveWeek() {
     return
   }
 
+  if (isWeekLocked.value) {
+    errorMessage.value = t(registrationWindowDescriptionKey.value)
+    statusMessage.value = ''
+    return
+  }
+
   busy.value = true
   errorMessage.value = ''
   statusMessage.value = ''
@@ -124,6 +180,12 @@ async function saveWeek() {
 
 async function copyLastWeek() {
   if (!selectedStudentId.value) {
+    return
+  }
+
+  if (isWeekLocked.value) {
+    errorMessage.value = t(registrationWindowDescriptionKey.value)
+    statusMessage.value = ''
     return
   }
 
@@ -204,7 +266,7 @@ onMounted(load)
           <div class="form-grid">
             <div class="field">
               <label>{{ t('common.labels.student') }}</label>
-              <select v-model="selectedStudentId">
+              <select v-model="selectedStudentId" :disabled="busy">
                 <option v-for="student in session.context?.students || []" :key="student.studentId" :value="student.studentId">
                   {{ student.studentName }} / {{ student.gradeLabel }}
                 </option>
@@ -213,14 +275,24 @@ onMounted(load)
 
             <div class="field">
               <label>{{ t('common.labels.weekStart') }}</label>
-              <input v-model="weekStart" type="date" />
+              <input v-model="weekStart" type="date" :disabled="busy" />
               <small>{{ t('registrations.editor.weekStartHelp') }}</small>
             </div>
           </div>
 
+          <div v-if="showReminderBanner" class="alert warning emphasis-alert">
+            <strong>{{ t(reminderTitleKey) }}</strong>
+            <p class="alert-copy">{{ t(reminderDescriptionKey) }}</p>
+          </div>
+
+          <div v-if="showWindowBanner" class="alert" :class="isWeekLocked ? 'error' : 'info'">
+            <strong>{{ t(registrationWindowTitleKey) }}</strong>
+            <p class="alert-copy">{{ t(registrationWindowDescriptionKey) }}</p>
+          </div>
+
           <div class="button-row">
-            <button class="button-secondary" type="button" :disabled="busy" @click="copyLastWeek">{{ t('common.actions.copyLastWeek') }}</button>
-            <button class="button" type="button" :disabled="busy" @click="saveWeek">{{ t('common.actions.save') }}</button>
+            <button class="button-secondary" type="button" :disabled="busy || isWeekLocked" @click="copyLastWeek">{{ t('common.actions.copyLastWeek') }}</button>
+            <button class="button" type="button" :disabled="busy || isWeekLocked" @click="saveWeek">{{ t('common.actions.save') }}</button>
           </div>
 
           <div v-if="statusMessage" class="alert success">{{ statusMessage }}</div>
@@ -249,7 +321,7 @@ onMounted(load)
       </div>
 
       <div class="day-grid">
-        <article v-for="day in formDays" :key="day.date" class="day-card">
+        <article v-for="day in formDays" :key="day.date" class="day-card" :class="{ locked: isWeekLocked }">
           <div class="day-card-header">
             <div>
               <strong>{{ formatDateLabel(day.date) }}</strong>
@@ -266,11 +338,12 @@ onMounted(load)
                 <input
                   v-model="day.toSchool"
                   type="checkbox"
+                  :disabled="busy || isWeekLocked"
                   @change="!day.toSchool && (day.toSchoolRouteId = null)"
                 />
                 <span>{{ t('registrations.daySettings.toSchool') }}</span>
               </label>
-              <select v-model="day.toSchoolRouteId" :disabled="!day.toSchool">
+              <select v-model="day.toSchoolRouteId" :disabled="busy || isWeekLocked || !day.toSchool">
                 <option :value="null">{{ t('registrations.daySettings.selectToSchoolRoute') }}</option>
                 <option v-for="route in morningRoutes" :key="route.routeId" :value="route.routeId">
                   {{ route.routeName }}
@@ -286,11 +359,12 @@ onMounted(load)
                 <input
                   v-model="day.homebound"
                   type="checkbox"
+                  :disabled="busy || isWeekLocked"
                   @change="!day.homebound && (day.homeboundRouteId = null)"
                 />
                 <span>{{ t('registrations.daySettings.homebound') }}</span>
               </label>
-              <select v-model="day.homeboundRouteId" :disabled="!day.homebound">
+              <select v-model="day.homeboundRouteId" :disabled="busy || isWeekLocked || !day.homebound">
                 <option :value="null">{{ t('registrations.daySettings.selectHomeboundRoute') }}</option>
                 <option v-for="route in homeRoutes" :key="route.routeId" :value="route.routeId">
                   {{ route.routeName }}

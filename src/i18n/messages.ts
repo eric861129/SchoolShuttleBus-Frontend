@@ -149,8 +149,8 @@ export const messages = {
     shell: {
       brandEyebrow: '康橋 Demo',
       brandTitle: '康橋交通車登記系統',
-      brandDescription: '明天 DEMO 可直接展示的交通車入口，串接 Azure Static Web Apps、App Service 與 Azure SQL。',
-      dataSource: '目前資料直接來自已部署的 Azure API，可用來現場展示跨角色流程。',
+      brandDescription: '整合家長登記、老師點名與管理作業的交通車入口。',
+      dataSource: '可從左側快速切換乘車登記、點名、路線與營運作業。',
       fallback: {
         eyebrow: '交通車系統',
         title: '康橋交通車 Demo',
@@ -193,7 +193,7 @@ export const messages = {
       hero: {
         eyebrow: '交通車 Demo',
         title: '康橋智慧交通車管理系統',
-        subtitle: '把家長登記、老師點名與管理端營運集中在同一個入口，讓明天的 Demo 可以順著角色流程自然切換。',
+        subtitle: '把家長登記、老師點名與管理端營運集中在同一個入口，讓角色切換與操作流程更直覺。',
       },
       metrics: {
         familyTitle: '每週搭乘登記',
@@ -269,6 +269,20 @@ export const messages = {
         title: 'Demo 操作建議',
         step1: '先選學生後按「複製上一週」，再調整其中一兩天的去程或回程路線，最後按「儲存本週登記」，會最容易看出系統價值。',
         step2: '去程只會顯示去程路線，回程只會顯示回程路線；取消勾選時，該段路線會自動清空，避免誤送資料。',
+      },
+      reminders: {
+        wednesdayTitle: '請盡快完成下週乘車登記',
+        wednesdayDescription: '今天若還沒完成下週乘車安排，請盡快送出，系統會在週四前持續提醒。',
+        thursdayTitle: '今天是下週乘車登記最後確認日',
+        thursdayDescription: '今天仍可完成下週登記，但送出後就不能再修改，請確認後再儲存。',
+      },
+      window: {
+        thursdayRegisterOnlyTitle: '週四仍可登記一次',
+        thursdayRegisterOnlyDescription: '今天可以新增或複製下週乘車安排一次；一旦送出，本週就不能再修改。',
+        thursdayLockedTitle: '本週四已完成送出',
+        thursdayLockedDescription: '你已在週四完成下週登記，管理端已開始統計，本週不能再修改。',
+        fridayLockedTitle: '週五已關閉下週登記',
+        fridayLockedDescription: '週五無法新增或修改下週乘車安排，請由管理者統計後再視需要協助處理。',
       },
       daySettings: {
         title: '每日搭乘設定',
@@ -490,8 +504,8 @@ export const messages = {
     admin: {
       hero: {
         pill: '管理端首頁',
-        title: '{name}，目前已載入 Demo 營運資料。',
-        description: '這裡用更有層次的摘要方式顯示學生、老師、路線與通知概況，方便快速確認系統可以進入 Demo。',
+        title: '{name}，歡迎回到管理總覽。',
+        description: '這裡用更有層次的摘要方式顯示學生、老師、路線與通知概況，方便快速掌握每日營運狀態。',
       },
       metrics: {
         students: '學生總數',
@@ -679,8 +693,8 @@ export const messages = {
     shell: {
       brandEyebrow: 'Kang Chiao Demo',
       brandTitle: 'School Shuttle Registration',
-      brandDescription: 'A shuttle demo ready for tomorrow, connected to Azure Static Web Apps, App Service, and Azure SQL.',
-      dataSource: 'The current data is loaded directly from the deployed Azure API for live multi-role demos.',
+      brandDescription: 'A single workspace for family registrations, teacher attendance, and administrative operations.',
+      dataSource: 'Use the navigation to move quickly between registrations, attendance, routes, and operations.',
       fallback: {
         eyebrow: 'Shuttle System',
         title: 'School Shuttle Demo',
@@ -723,7 +737,7 @@ export const messages = {
       hero: {
         eyebrow: 'School Shuttle Demo',
         title: 'Kang Chiao School Shuttle System',
-        subtitle: 'Bring family registrations, teacher attendance, and admin operations into one entry point so tomorrow’s demo can move naturally across roles.',
+        subtitle: 'Bring family registrations, teacher attendance, and admin operations into one entry point with a smoother cross-role workflow.',
       },
       metrics: {
         familyTitle: 'Weekly ride registration',
@@ -799,6 +813,20 @@ export const messages = {
         title: 'Demo tip',
         step1: 'Choose a student, click "Copy last week", adjust one or two days, then save. That usually shows the product value most clearly.',
         step2: 'Only outbound routes are shown for the outbound trip and only return routes for the return trip. Unchecking a trip clears that route automatically to avoid invalid submissions.',
+      },
+      reminders: {
+        wednesdayTitle: 'Please complete next week registration soon',
+        wednesdayDescription: 'If next week is still not submitted, please finish it today. The system will highlight it again on Thursday.',
+        thursdayTitle: 'Thursday is the final confirmation day',
+        thursdayDescription: 'You can still submit next week today, but once it is saved, further changes will be locked.',
+      },
+      window: {
+        thursdayRegisterOnlyTitle: 'Thursday allows one final submission',
+        thursdayRegisterOnlyDescription: 'You can still create or copy next week today, but after that submission the week becomes read-only.',
+        thursdayLockedTitle: 'Thursday submission already completed',
+        thursdayLockedDescription: 'Next week was already submitted today, so changes are locked while administrators prepare their summary.',
+        fridayLockedTitle: 'Friday closes next week registration',
+        fridayLockedDescription: 'New submissions and changes are closed on Friday so administrators can finish their weekly summary.',
       },
       daySettings: {
         title: 'Daily ride settings',
@@ -1020,8 +1048,8 @@ export const messages = {
     admin: {
       hero: {
         pill: 'Admin Home',
-        title: '{name}, demo operational data has been loaded.',
-        description: 'This overview presents students, teachers, routes, and notifications with clearer hierarchy so you can confirm the system is ready for the demo.',
+        title: 'Welcome back, {name}.',
+        description: 'This overview presents students, teachers, routes, and notifications with clearer hierarchy so you can review daily operational status quickly.',
       },
       metrics: {
         students: 'Students',
