@@ -33,6 +33,10 @@ const selectedRoute = computed(() => routes.value.find((route) => route.routeId 
 const isAdministrator = computed(() => session.roles.includes('Administrator'))
 const activeRouteCount = computed(() => routes.value.filter((route) => route.isActive).length)
 const stopCount = computed(() => routes.value.reduce((sum, route) => sum + route.stops.length, 0))
+const selectedRouteStops = computed(() =>
+  selectedRoute.value ? selectedRoute.value.stops.slice().sort((left, right) => left.sequence - right.sequence) : [],
+)
+const selectedRouteAssignments = computed(() => selectedRoute.value?.assignments || [])
 const translatedRouteTypeOptions = computed(() =>
   routeTypeOptions.map((item) => ({ ...item, label: t(item.labelKey) })),
 )
@@ -261,14 +265,17 @@ onMounted(load)
       <section class="panel">
       <div class="section-header">
         <div>
-          <h3>{{ t('routes.editPanel.title') }}</h3>
-          <p class="muted">{{ t('routes.editPanel.description') }}</p>
+          <h3>{{ t('routes.overviewPanel.title') }}</h3>
+          <p class="muted">{{ t('routes.overviewPanel.description') }}</p>
         </div>
+        <button v-if="selectedRoute" class="button-secondary" type="button" @click="openEditModal(selectedRoute.routeId)">
+          {{ t('common.actions.edit') }}
+        </button>
       </div>
 
       <div v-if="!selectedRoute" class="empty-state">
-        <strong>{{ t('routes.editPanel.emptyTitle') }}</strong>
-        <span>{{ t('routes.editPanel.emptyDescription') }}</span>
+        <strong>{{ t('routes.overviewPanel.emptyTitle') }}</strong>
+        <span>{{ t('routes.overviewPanel.emptyDescription') }}</span>
       </div>
 
       <div v-else class="stack">
@@ -279,19 +286,68 @@ onMounted(load)
             <small>{{ selectedRoute.campusName }}</small>
           </div>
           <div class="stat-card">
-            <span>{{ t('routes.editPanel.directionType') }}</span>
+            <span>{{ t('routes.overviewPanel.directionType') }}</span>
             <strong>{{ directionLabel(selectedRoute.direction) }}</strong>
             <small>{{ routeTypeLabel(selectedRoute.routeType) }}</small>
           </div>
           <div class="stat-card">
-            <span>{{ t('routes.editPanel.stopCount') }}</span>
-            <strong>{{ stops.length }}</strong>
-            <small>{{ t('routes.editPanel.stopCountHelp') }}</small>
+            <span>{{ t('routes.overviewPanel.stopCount') }}</span>
+            <strong>{{ selectedRouteStops.length }}</strong>
+            <small>{{ t('routes.overviewPanel.stopCountHelp') }}</small>
+          </div>
+          <div class="stat-card">
+            <span>{{ t('routes.overviewPanel.teacherCount') }}</span>
+            <strong>{{ selectedRouteAssignments.length }}</strong>
+            <small>{{ t('routes.overviewPanel.teacherCountHelp') }}</small>
           </div>
         </div>
 
-        <div class="button-row">
-          <button class="button" type="button" @click="openEditModal(selectedRoute.routeId)">{{ t('common.actions.edit') }}</button>
+        <div class="tool-card">
+          <div class="section-header">
+            <div>
+              <h3>{{ t('routes.overviewPanel.assignmentsTitle') }}</h3>
+              <p class="muted">{{ t('routes.overviewPanel.assignmentsDescription') }}</p>
+            </div>
+          </div>
+
+          <div v-if="!selectedRouteAssignments.length" class="empty-state">
+            <strong>{{ t('routes.overviewPanel.noTeachersTitle') }}</strong>
+            <span>{{ t('routes.overviewPanel.noTeachersDescription') }}</span>
+          </div>
+
+          <div v-else class="list">
+            <div v-for="assignment in selectedRouteAssignments" :key="assignment.routeAssignmentId" class="list-card">
+              <strong>{{ assignment.staffName }}</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="tool-card">
+          <div class="section-header">
+            <div>
+              <h3>{{ t('routes.overviewPanel.stopsTitle') }}</h3>
+              <p class="muted">{{ t('routes.overviewPanel.stopsDescription') }}</p>
+            </div>
+          </div>
+
+          <div v-if="!selectedRouteStops.length" class="empty-state">
+            <strong>{{ t('routes.overviewPanel.noStopsTitle') }}</strong>
+            <span>{{ t('routes.overviewPanel.noStopsDescription') }}</span>
+          </div>
+
+          <div v-else class="list">
+            <div v-for="stop in selectedRouteStops" :key="`${selectedRoute.routeId}-${stop.sequence}`" class="list-card">
+              <div class="section-header">
+                <div>
+                  <strong>{{ stop.sequence }}. {{ stop.stopName }}</strong>
+                  <p class="muted">{{ stop.address }}</p>
+                </div>
+                <span v-if="stop.handoffContactName || stop.handoffContactPhone" class="pill subtle">
+                  {{ stop.handoffContactName || stop.handoffContactPhone }}
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       </section>
