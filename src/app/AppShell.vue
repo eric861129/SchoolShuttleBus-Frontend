@@ -57,7 +57,6 @@ async function handleLogout() {
       <section class="sidebar-brand">
         <div class="eyebrow">{{ t('shell.brandEyebrow') }}</div>
         <h1>{{ t('shell.brandTitle') }}</h1>
-        <p>{{ t('shell.brandDescription') }}</p>
       </section>
 
       <section class="sidebar-user-card">
@@ -76,14 +75,12 @@ async function handleLogout() {
         <RouterLink v-for="item in navigation" :key="item.to" :to="item.to" class="sidebar-link">
           <div>
             <strong>{{ t(item.labelKey) }}</strong>
-            <p>{{ t(item.descriptionKey) }}</p>
           </div>
           <span class="sidebar-arrow">→</span>
         </RouterLink>
       </nav>
 
       <div class="sidebar-note">
-        <p>{{ t('shell.dataSource') }}</p>
         <button class="button-ghost" type="button" @click="handleLogout">{{ t('common.actions.logout') }}</button>
       </div>
     </aside>
