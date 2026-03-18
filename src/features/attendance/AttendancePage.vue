@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { AttendanceRecordResponse, AttendanceSessionResponse, RouteResponse, TripDirection } from '@/api/contracts'
 import { attendanceStatusOptions, tripDirectionOptions } from '@/api/contracts'
@@ -20,12 +20,18 @@ const direction = ref<TripDirection>(1)
 const errorMessage = ref('')
 const statusMessage = ref('')
 const isRosterModalOpen = ref(false)
+const isCompactRoster = ref(false)
+let rosterMediaQuery: MediaQueryList | null = null
+let removeRosterResizeListener: (() => void) | null = null
 const translatedTripDirectionOptions = computed(() =>
   tripDirectionOptions.map((item) => ({ ...item, label: t(item.labelKey) })),
 )
 const translatedAttendanceStatusOptions = computed(() =>
   attendanceStatusOptions.map((item) => ({ ...item, label: t(item.labelKey) })),
 )
+const usesRosterModal = computed(() => isCompactRoster.value)
+const showInlineRoster = computed(() => !!activeSession.value && !usesRosterModal.value)
+const activeSessionId = computed(() => activeSession.value?.attendanceSessionId || '')
 const availableRoutes = computed(() => filterRoutesByDirection(routes.value, direction.value))
 
 function summarizeSession(sessionItem: AttendanceSessionResponse | null | undefined) {
@@ -67,6 +73,32 @@ function formatSessionDateLabel(value: string) {
 
 const activeSessionSummary = computed(() => summarizeSession(activeSession.value))
 
+function applyRosterLayout(matchesCompact: boolean) {
+  const wasCompact = isCompactRoster.value
+  isCompactRoster.value = matchesCompact
+
+  if (!matchesCompact && wasCompact && isRosterModalOpen.value) {
+    isRosterModalOpen.value = false
+  }
+}
+
+function syncRosterLayout() {
+  if (typeof window === 'undefined') {
+    applyRosterLayout(false)
+    return
+  }
+
+  const matchesCompact = typeof window.matchMedia === 'function'
+    ? window.matchMedia('(max-width: 1100px)').matches
+    : window.innerWidth <= 1100
+
+  applyRosterLayout(matchesCompact)
+}
+
+function handleRosterMediaQueryChange(event: MediaQueryListEvent) {
+  applyRosterLayout(event.matches)
+}
+
 async function load() {
   try {
     const [routePayload, sessionPayload] = await Promise.all([
@@ -90,7 +122,7 @@ async function openSession() {
   statusMessage.value = ''
 
   try {
-    activeSession.value = await authorizedJson<AttendanceSessionResponse>(session, '/api/attendance/sessions', {
+    const nextSession = await authorizedJson<AttendanceSessionResponse>(session, '/api/attendance/sessions', {
       method: 'POST',
       body: {
         routeId: routeId.value,
@@ -99,9 +131,12 @@ async function openSession() {
       },
     })
 
+    activeSession.value = nextSession
     await load()
+    openRosterExperience(
+      sessions.value.find((item) => item.attendanceSessionId === nextSession.attendanceSessionId) || nextSession,
+    )
     statusMessage.value = t('attendance.messages.openSuccess')
-    isRosterModalOpen.value = true
   } catch (error) {
     errorMessage.value = error instanceof ApiError ? error.message : t('attendance.messages.openError')
   }
@@ -146,9 +181,16 @@ async function completeSession() {
   }
 }
 
-function openRoster(sessionItem: AttendanceSessionResponse) {
+function selectSession(sessionItem: AttendanceSessionResponse) {
   activeSession.value = sessionItem
-  isRosterModalOpen.value = true
+}
+
+function openRosterExperience(sessionItem: AttendanceSessionResponse) {
+  activeSession.value = sessionItem
+
+  if (usesRosterModal.value) {
+    isRosterModalOpen.value = true
+  }
 }
 
 const visibleSessions = computed(() => sessions.value.slice().sort((left, right) => right.date.localeCompare(left.date)))
@@ -161,7 +203,27 @@ watch(routes, (nextRoutes) => {
   routeId.value = resolveAttendanceRouteId(nextRoutes, direction.value, routeId.value)
 })
 
-onMounted(load)
+onMounted(() => {
+  if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
+    rosterMediaQuery = window.matchMedia('(max-width: 1100px)')
+    applyRosterLayout(rosterMediaQuery.matches)
+
+    rosterMediaQuery.addEventListener?.('change', handleRosterMediaQueryChange)
+    rosterMediaQuery.addListener?.(handleRosterMediaQueryChange)
+  } else {
+    syncRosterLayout()
+    window.addEventListener('resize', syncRosterLayout, { passive: true })
+    removeRosterResizeListener = () => window.removeEventListener('resize', syncRosterLayout)
+  }
+
+  load()
+})
+
+onBeforeUnmount(() => {
+  rosterMediaQuery?.removeEventListener?.('change', handleRosterMediaQueryChange)
+  rosterMediaQuery?.removeListener?.(handleRosterMediaQueryChange)
+  removeRosterResizeListener?.()
+})
 </script>
 
 <template>
@@ -241,19 +303,29 @@ onMounted(load)
       <div v-if="errorMessage" class="alert error" style="margin-top: 14px;">{{ errorMessage }}</div>
 
       <div class="list" style="margin-top: 18px;">
-        <div v-for="item in visibleSessions" :key="item.attendanceSessionId" class="list-card">
+        <div
+          v-for="item in visibleSessions"
+          :key="item.attendanceSessionId"
+          class="list-card is-interactive"
+          :class="{ active: item.attendanceSessionId === activeSessionId }"
+          role="button"
+          tabindex="0"
+          @click="selectSession(item)"
+          @keydown.enter.prevent="selectSession(item)"
+          @keydown.space.prevent="selectSession(item)"
+        >
           <div class="section-header">
             <div>
               <strong>{{ item.routeName }}</strong>
-              <p class="muted">{{ item.date }} / {{ item.direction === 1 ? t('common.tripDirection.toSchool') : t('common.tripDirection.homebound') }}</p>
+              <p class="muted">{{ formatSessionDateLabel(item.date) }} / {{ item.direction === 1 ? t('common.tripDirection.toSchool') : t('common.tripDirection.homebound') }}</p>
               <p class="muted">{{ t('attendance.roster.totalLabel') }} {{ summarizeSession(item).total }}</p>
             </div>
             <span class="status-badge" :class="item.isCompleted ? 'success' : 'info'">
               {{ item.isCompleted ? t('common.sessionState.completed') : t('common.sessionState.inProgress') }}
             </span>
           </div>
-          <div class="route-card-actions">
-            <button class="button-ghost" type="button" @click="openRoster(item)">{{ t('common.actions.view') }}</button>
+          <div v-if="usesRosterModal" class="route-card-actions">
+            <button class="button-ghost" type="button" @click.stop="openRosterExperience(item)">{{ t('common.actions.view') }}</button>
           </div>
         </div>
       </div>
@@ -265,7 +337,7 @@ onMounted(load)
           <h3>{{ t('attendance.roster.title') }}</h3>
           <p class="muted">{{ t('attendance.roster.description') }}</p>
         </div>
-        <button v-if="activeSession && !activeSession.isCompleted" class="button-secondary" type="button" @click="completeSession">
+        <button v-if="activeSession && !activeSession.isCompleted && !showInlineRoster" class="button-secondary" type="button" @click="completeSession">
           {{ t('common.actions.complete') }}
         </button>
       </div>
@@ -273,6 +345,86 @@ onMounted(load)
       <div v-if="!activeSession" class="empty-state">
         <strong>{{ t('attendance.roster.emptyTitle') }}</strong>
         <span>{{ t('attendance.roster.emptyDescription') }}</span>
+      </div>
+
+      <div v-else-if="showInlineRoster" class="stack">
+        <div class="section-header">
+          <div>
+            <strong>{{ activeSession.routeName }}</strong>
+            <p class="muted">
+              {{ formatSessionDateLabel(activeSession.date) }} /
+              {{ activeSession.direction === 1 ? t('common.tripDirection.toSchool') : t('common.tripDirection.homebound') }}
+            </p>
+          </div>
+          <button v-if="!activeSession.isCompleted" class="button-secondary" type="button" @click="completeSession">
+            {{ t('common.actions.complete') }}
+          </button>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span>{{ t('attendance.roster.totalLabel') }}</span>
+            <strong>{{ activeSessionSummary.total }}</strong>
+            <small>{{ t('attendance.roster.totalHelp') }}</small>
+          </div>
+          <div class="stat-card">
+            <span>{{ t('attendance.roster.boardedLabel') }}</span>
+            <strong>{{ activeSessionSummary.boarded }}</strong>
+            <small>{{ t('attendance.roster.boardedHelp') }}</small>
+          </div>
+          <div class="stat-card">
+            <span>{{ t('attendance.roster.leaveAbsentLabel') }}</span>
+            <strong>{{ activeSessionSummary.onLeave + activeSessionSummary.absent }}</strong>
+            <small>{{ t('attendance.roster.leaveAbsentHelp') }}</small>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <span>{{ t('attendance.roster.dateLabel') }}</span>
+          <strong>{{ formatSessionDateLabel(activeSession.date) }}</strong>
+          <small>{{ activeSession.direction === 1 ? t('common.tripDirection.toSchool') : t('common.tripDirection.homebound') }} / {{ activeSession.routeName }}</small>
+        </div>
+
+        <div v-if="!activeSession.records.length" class="empty-state">
+          <strong>{{ t('attendance.roster.zeroTitle') }}</strong>
+          <span>{{ t('attendance.roster.zeroDescription') }}</span>
+        </div>
+
+        <div v-else class="list">
+          <div v-for="record in activeSession.records" :key="record.attendanceRecordId" class="record-card">
+            <div class="record-card-header">
+              <div>
+                <strong>{{ record.studentName }}</strong>
+                <p class="muted">
+                  <span>{{ t('attendance.roster.emergencyPhoneLabel') }}</span>
+                  <a v-if="record.emergencyPhoneSnapshot" :href="`tel:${record.emergencyPhoneSnapshot}`">
+                    {{ record.emergencyPhoneSnapshot }}
+                  </a>
+                  <span v-else>{{ t('common.empty.notProvided') }}</span>
+                </p>
+              </div>
+              <span class="status-badge" :class="statusTone(record.status)">
+                {{ statusLabel(record.status) }}
+              </span>
+            </div>
+
+            <div class="record-card-actions">
+              <div>
+                <button
+                  v-for="item in translatedAttendanceStatusOptions"
+                  :key="item.value"
+                  class="status-button"
+                  :class="{ 'is-active': record.status === item.value, [statusTone(item.value)]: true }"
+                  type="button"
+                  :disabled="activeSession.isCompleted"
+                  @click="updateStatus(record, item.value)"
+                >
+                  {{ item.label }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div v-else class="stack">
@@ -301,13 +453,14 @@ onMounted(load)
         </div>
 
         <div class="button-row">
-          <button class="button" type="button" @click="openRoster(activeSession)">{{ t('common.actions.view') }}</button>
+          <button class="button" type="button" @click="openRosterExperience(activeSession)">{{ t('common.actions.view') }}</button>
         </div>
       </div>
       </section>
     </div>
 
     <AppModal
+      v-if="usesRosterModal"
       v-model="isRosterModalOpen"
       :title="t('attendance.roster.title')"
       :description="t('attendance.roster.description')"
@@ -321,7 +474,7 @@ onMounted(load)
         <div class="section-header">
           <div>
             <strong>{{ activeSession.routeName }}</strong>
-            <p class="muted">{{ activeSession.date }} / {{ activeSession.direction === 1 ? t('common.tripDirection.toSchool') : t('common.tripDirection.homebound') }}</p>
+            <p class="muted">{{ formatSessionDateLabel(activeSession.date) }} / {{ activeSession.direction === 1 ? t('common.tripDirection.toSchool') : t('common.tripDirection.homebound') }}</p>
           </div>
           <button v-if="!activeSession.isCompleted" class="button-secondary" type="button" @click="completeSession">
             {{ t('common.actions.complete') }}

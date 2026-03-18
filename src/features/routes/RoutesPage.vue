@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { AdminLookupsResponse, RouteResponse } from '@/api/contracts'
 import { routeTypeOptions, tripDirectionOptions } from '@/api/contracts'
@@ -28,6 +28,10 @@ const assignStaffProfileId = ref('')
 const errorMessage = ref('')
 const statusMessage = ref('')
 const isEditModalOpen = ref(false)
+const isCompactEditor = ref(false)
+const isInlineEditMode = ref(false)
+let editorMediaQuery: MediaQueryList | null = null
+let removeEditorResizeListener: (() => void) | null = null
 
 const selectedRoute = computed(() => routes.value.find((route) => route.routeId === selectedRouteId.value) || null)
 const isAdministrator = computed(() => session.roles.includes('Administrator'))
@@ -37,6 +41,8 @@ const selectedRouteStops = computed(() =>
   selectedRoute.value ? selectedRoute.value.stops.slice().sort((left, right) => left.sequence - right.sequence) : [],
 )
 const selectedRouteAssignments = computed(() => selectedRoute.value?.assignments || [])
+const usesModalEditor = computed(() => isCompactEditor.value)
+const showInlineEditor = computed(() => !usesModalEditor.value && isInlineEditMode.value)
 const translatedRouteTypeOptions = computed(() =>
   routeTypeOptions.map((item) => ({ ...item, label: t(item.labelKey) })),
 )
@@ -73,6 +79,38 @@ function syncSelectedRoute() {
     handoffContactPhone: stop.handoffContactPhone || '',
   }))
   assignStaffProfileId.value = ''
+}
+
+function applyEditorLayout(matchesCompact: boolean) {
+  const wasCompact = isCompactEditor.value
+  isCompactEditor.value = matchesCompact
+
+  if (matchesCompact) {
+    isInlineEditMode.value = false
+    return
+  }
+
+  if (wasCompact && isEditModalOpen.value) {
+    isEditModalOpen.value = false
+    isInlineEditMode.value = true
+  }
+}
+
+function syncEditorLayout() {
+  if (typeof window === 'undefined') {
+    applyEditorLayout(false)
+    return
+  }
+
+  const matchesCompact = typeof window.matchMedia === 'function'
+    ? window.matchMedia('(max-width: 1100px)').matches
+    : window.innerWidth <= 1100
+
+  applyEditorLayout(matchesCompact)
+}
+
+function handleEditorMediaQueryChange(event: MediaQueryListEvent) {
+  applyEditorLayout(event.matches)
 }
 
 async function load() {
@@ -148,14 +186,46 @@ function addStop() {
   })
 }
 
-function openEditModal(routeId: string) {
+function selectRoute(routeId: string) {
+  selectedRouteId.value = routeId
+  isInlineEditMode.value = false
+}
+
+function openEditExperience(routeId: string) {
   selectedRouteId.value = routeId
   syncSelectedRoute()
-  isEditModalOpen.value = true
+
+  if (usesModalEditor.value) {
+    isEditModalOpen.value = true
+    return
+  }
+
+  isInlineEditMode.value = true
 }
 
 watch(selectedRouteId, syncSelectedRoute)
-onMounted(load)
+
+onMounted(() => {
+  if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
+    editorMediaQuery = window.matchMedia('(max-width: 1100px)')
+    applyEditorLayout(editorMediaQuery.matches)
+
+    editorMediaQuery.addEventListener?.('change', handleEditorMediaQueryChange)
+    editorMediaQuery.addListener?.(handleEditorMediaQueryChange)
+  } else {
+    syncEditorLayout()
+    window.addEventListener('resize', syncEditorLayout, { passive: true })
+    removeEditorResizeListener = () => window.removeEventListener('resize', syncEditorLayout)
+  }
+
+  load()
+})
+
+onBeforeUnmount(() => {
+  editorMediaQuery?.removeEventListener?.('change', handleEditorMediaQueryChange)
+  editorMediaQuery?.removeListener?.(handleEditorMediaQueryChange)
+  removeEditorResizeListener?.()
+})
 </script>
 
 <template>
@@ -238,6 +308,11 @@ onMounted(load)
           :key="route.routeId"
           class="route-card"
           :class="{ active: route.routeId === selectedRouteId }"
+          role="button"
+          tabindex="0"
+          @click="selectRoute(route.routeId)"
+          @keydown.enter.prevent="selectRoute(route.routeId)"
+          @keydown.space.prevent="selectRoute(route.routeId)"
         >
           <div class="route-card-header">
             <div>
@@ -256,7 +331,9 @@ onMounted(load)
           </div>
 
           <div class="route-card-actions">
-            <button class="button-ghost" type="button" @click="openEditModal(route.routeId)">{{ t('common.actions.edit') }}</button>
+            <button class="button-ghost" type="button" @click.stop="openEditExperience(route.routeId)">
+              {{ t('common.actions.edit') }}
+            </button>
           </div>
         </div>
       </div>
@@ -265,17 +342,92 @@ onMounted(load)
       <section class="panel">
       <div class="section-header">
         <div>
-          <h3>{{ t('routes.overviewPanel.title') }}</h3>
-          <p class="muted">{{ t('routes.overviewPanel.description') }}</p>
+          <h3>{{ showInlineEditor ? t('routes.editPanel.title') : t('routes.overviewPanel.title') }}</h3>
+          <p class="muted">{{ showInlineEditor ? t('routes.editPanel.description') : t('routes.overviewPanel.description') }}</p>
         </div>
-        <button v-if="selectedRoute" class="button-secondary" type="button" @click="openEditModal(selectedRoute.routeId)">
-          {{ t('common.actions.edit') }}
-        </button>
+        <div v-if="selectedRoute" class="button-row">
+          <button v-if="showInlineEditor" class="button-ghost" type="button" @click="isInlineEditMode = false">
+            {{ t('common.actions.view') }}
+          </button>
+          <button v-else class="button-secondary" type="button" @click="openEditExperience(selectedRoute.routeId)">
+            {{ t('common.actions.edit') }}
+          </button>
+        </div>
       </div>
 
       <div v-if="!selectedRoute" class="empty-state">
         <strong>{{ t('routes.overviewPanel.emptyTitle') }}</strong>
         <span>{{ t('routes.overviewPanel.emptyDescription') }}</span>
+      </div>
+
+      <div v-else-if="showInlineEditor" class="stack">
+        <div class="form-grid">
+          <div class="field">
+            <label>{{ t('common.labels.routeName') }}</label>
+            <input v-model="editForm.routeName" />
+          </div>
+          <div class="field">
+            <label>{{ t('common.labels.routeType') }}</label>
+            <select v-model="editForm.routeType">
+              <option v-for="item in translatedRouteTypeOptions" :key="item.value" :value="item.value">{{ item.label }}</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>{{ t('common.labels.activeStatus') }}</label>
+            <select v-model="editForm.isActive">
+              <option :value="true">{{ t('routes.form.active') }}</option>
+              <option :value="false">{{ t('routes.form.inactive') }}</option>
+            </select>
+          </div>
+          <div v-if="isAdministrator" class="field">
+            <label>{{ t('common.labels.assignedTeacher') }}</label>
+            <select v-model="assignStaffProfileId">
+              <option value="">{{ t('common.empty.noChange') }}</option>
+              <option v-for="staff in lookups?.staffProfiles || []" :key="staff.staffProfileId" :value="staff.staffProfileId">
+                {{ staff.employeeNumber }} / {{ staff.fullName }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div class="section-header">
+          <div>
+            <h3>{{ t('routes.form.stopSettingsTitle') }}</h3>
+            <p class="muted">{{ t('routes.form.stopSettingsDescription') }}</p>
+          </div>
+          <button class="button-secondary" type="button" @click="addStop">{{ t('common.actions.addStop') }}</button>
+        </div>
+
+        <div class="list">
+          <div v-for="stop in stops" :key="stop.sequence" class="stop-card">
+            <div class="form-grid">
+              <div class="field">
+                <label>{{ t('routes.form.sequence') }}</label>
+                <input v-model.number="stop.sequence" type="number" min="1" />
+              </div>
+              <div class="field">
+                <label>{{ t('routes.form.stopName') }}</label>
+                <input v-model="stop.stopName" />
+              </div>
+              <div class="field">
+                <label>{{ t('routes.form.address') }}</label>
+                <input v-model="stop.address" />
+              </div>
+              <div class="field">
+                <label>{{ t('routes.form.handoffName') }}</label>
+                <input v-model="stop.handoffContactName" />
+              </div>
+              <div class="field">
+                <label>{{ t('routes.form.handoffPhone') }}</label>
+                <input v-model="stop.handoffContactPhone" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="button-row">
+          <button v-if="isAdministrator" class="button" type="button" @click="saveRoute">{{ t('routes.editPanel.saveButton') }}</button>
+        </div>
       </div>
 
       <div v-else class="stack">
@@ -354,6 +506,7 @@ onMounted(load)
     </div>
 
     <AppModal
+      v-if="usesModalEditor"
       v-model="isEditModalOpen"
       :title="t('routes.editPanel.title')"
       :description="t('routes.editPanel.description')"
