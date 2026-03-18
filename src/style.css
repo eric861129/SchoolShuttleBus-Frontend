@@ -98,11 +98,14 @@ textarea:focus-visible,
 .page-shell {
   min-height: 100vh;
   min-height: 100dvh;
+  height: 100vh;
+  height: 100dvh;
   display: grid;
   grid-template-columns: 320px minmax(0, 1fr);
   width: 100%;
   max-width: 100%;
   overflow-x: clip;
+  overflow-y: hidden;
 }
 
 .page-sidebar {
@@ -111,12 +114,15 @@ textarea:focus-visible,
   align-self: start;
   min-height: 100vh;
   min-height: 100dvh;
+  height: 100vh;
+  height: 100dvh;
   padding: 28px 22px;
   background:
     radial-gradient(circle at top right, rgba(84, 146, 255, 0.25), transparent 26%),
     linear-gradient(180deg, rgba(10, 29, 60, 0.96), rgba(14, 35, 71, 0.94));
   color: #f4f9ff;
   border-right: 1px solid rgba(255, 255, 255, 0.08);
+  overflow-y: auto;
 }
 
 .sidebar-brand,
@@ -225,9 +231,13 @@ textarea:focus-visible,
 
 .page-content {
   padding: 32px;
+  height: 100vh;
+  height: 100dvh;
   min-width: 0;
   width: 100%;
   max-width: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .topbar {
@@ -1110,13 +1120,17 @@ textarea:focus-visible,
 
 @media (max-width: 1200px) {
   .page-shell {
+    height: auto;
     grid-template-columns: 1fr;
+    overflow: visible;
   }
 
   .page-sidebar {
     position: static;
+    height: auto;
     min-height: auto;
     padding-bottom: 16px;
+    overflow: hidden;
   }
 
   .sidebar-brand,
@@ -1208,6 +1222,8 @@ textarea:focus-visible,
 
 @media (max-width: 1180px) {
   .page-content {
+    height: auto;
+    overflow: visible;
     padding: 24px;
   }
 }
@@ -1400,17 +1416,22 @@ textarea:focus-visible,
 }
 
 :root.is-handset .page-shell {
+  height: auto;
   grid-template-columns: 1fr;
+  overflow: visible;
 }
 
 :root.is-handset .page-sidebar {
   position: static;
+  height: auto;
   min-height: auto;
   padding: 14px 14px 16px;
   overflow: hidden;
 }
 
 :root.is-handset .page-content {
+  height: auto;
+  overflow: visible;
   padding: 14px;
 }
 
